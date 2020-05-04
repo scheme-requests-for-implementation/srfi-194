@@ -1,0 +1,22 @@
+* SRFI 194: Random data generators
+
+** by Shiro Kawai (design), Arvydas Silanskas (implementation), and John Cowan (editor and shepherd)
+
+
+
+keywords: [[https://srfi.schemers.org/?keywords=randomness][Randomness]]
+
+This repository hosts [[https://srfi.schemers.org/srfi-194/][SRFI 194]]: Random data generators, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
+
+This SRFI is in /draft/ status.
+
+See also [[https://srfi.schemers.org/srfi-27/][SRFI 27: Sources of Random Bits]].
+
+The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-194/srfi-194.html][SRFI Document]].
+
+If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[https://srfi.schemers.org/srfi-194/][join the SRFI-194 mailing list]] and send your message there.
+
+Thank you.
+
+
+[[mailto:srfi-editors@srfi.schemers.org][The SRFI Editors]]

@@ -1,4 +1,4 @@
-(import 
+(import
   (advanced-random)
   (scheme base)
   (scheme cxr)
@@ -16,33 +16,33 @@
   (define lower-quarter (+ from (* 0.25 range)))
   (define upper-quarter (- to (* 0.25 range)))
   (test-assert
-    (generator-every 
+    (generator-every
       (lambda (num)
         (and (>= num from)
-             (< num to))) 
+             (< num to)))
       (gtake gen 10000)))
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num from)
-             (< num lower-quarter))) 
+             (< num lower-quarter)))
       gen))
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num lower-quarter)
-             (< num upper-quarter))) 
+             (< num upper-quarter)))
       gen))
 
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num upper-quarter)
-             (< num to))) 
+             (< num to)))
       gen)))
 
 (define (assert-int-generator gen byte-size signed?)
-  (define from (if signed? 
+  (define from (if signed?
                    (- (expt 2 (- byte-size 1)))
                    0))
   (define to (if signed?
@@ -53,10 +53,10 @@
 (test-begin "Advanced random")
 
 (test-group "Test random int"
-            (assert-number-generator 
+            (assert-number-generator
               (make-random-integer-generator 1 100)
               1 100)
-            (assert-number-generator 
+            (assert-number-generator
               (make-random-integer-generator default-random-source 1 100)
               1 100)
 
@@ -67,21 +67,21 @@
                 (define signed? (caddr testcase))
                 (assert-int-generator (make-gen) byte-size signed?)
                 (assert-int-generator (make-gen default-random-source) byte-size signed?))
-              (list 
+              (list
                 (list make-random-u8-generator 8 #f)
-                (list make-random-s8-generator 8 #t) 
-                (list make-random-u16-generator 16 #f) 
-                (list make-random-s16-generator 16 #t) 
-                (list make-random-u32-generator 32 #f) 
-                (list make-random-s32-generator 32 #t) 
-                (list make-random-u64-generator 64 #f) 
+                (list make-random-s8-generator 8 #t)
+                (list make-random-u16-generator 16 #f)
+                (list make-random-s16-generator 16 #t)
+                (list make-random-u32-generator 32 #f)
+                (list make-random-s32-generator 32 #t)
+                (list make-random-u64-generator 64 #f)
                 (list make-random-s64-generator 64 #t))))
 
 (test-group "Test random real"
             (assert-number-generator
               (make-random-real-generator 1.0 5.0)
               1.0 5.0)
-            
+
             (test-assert
               (generator-any
                 (lambda (v)
@@ -175,9 +175,9 @@
                                    (or (equal? c #\a)
                                          (equal? c #\b)))
                                  (string->list str))))
-                (gtake (make-random-string-generator default-random-source 5 "ab") 
+                (gtake (make-random-string-generator default-random-source 5 "ab")
                        10000)))
-            
+
             (test-assert
               (generator-any
                 (lambda (str)
@@ -187,18 +187,18 @@
 (test-group "Test poisson"
             ;;TODO import from somewhere?
             (define (fact k)
-              (cond 
+              (cond
                 ((<= k 1) 1)
                 (else (* k (fact (- k 1))))))
             (define (expected-fraction L k)
               (/ (* (exact (expt L k)) (exact (exp (- L))))
                  (fact k)))
-            
+
             (define (test-poisson L poisson-gen test-points)
              (generator-every
                (lambda (k)
                  (define expect (expected-fraction L k))
-                 (define actual (/ (generator-count 
+                 (define actual (/ (generator-count
                                      (lambda (i) (= i k))
                                      (gtake poisson-gen 10000))
                                    10000))
@@ -206,7 +206,7 @@
                  (test-assert (> ratio 0.9))
                  (test-assert (< ratio 1.1)))
                (list->generator test-points)))
-            
+
             (test-poisson 2 (make-poisson-generator 2) '(1 2 3))
             (test-poisson 2 (make-poisson-generator default-random-source 2) '(1 2 3))
             (test-poisson 40 (make-poisson-generator 40) '(30 40 50))
@@ -216,7 +216,7 @@
             (define frac-at-1dev 0.34134)
             (define frac-at-2dev 0.47725)
             (define frac-at-3dev 0.49865)
-            
+
             (define (test-normal-at-point gen count-from count-to expected-fraction)
               (define actual (/ (generator-count
                                   (lambda (n)
@@ -226,22 +226,22 @@
                                 10000.0))
               (test-assert (and (> actual (* 0.9 expected-fraction))
                                 (< actual (* 1.1 expected-fraction)))))
-            
+
             (define (test-normal gen mean deviation)
               (test-normal-at-point gen mean (+ mean deviation) frac-at-1dev)
               (test-normal-at-point gen mean (+ mean (* 2 deviation)) frac-at-2dev)
               (test-normal-at-point gen mean (+ mean (* 3 deviation)) frac-at-3dev))
-            
+
             (test-normal (make-normal-generator) 0.0 1.0)
             (test-normal (make-normal-generator default-random-source) 0.0 1.0)
             (test-normal (make-normal-generator 1.0) 1.0 1.0)
             (test-normal (make-normal-generator 1.0 2.0) 1.0 2.0)
             (test-normal (make-normal-generator default-random-source 1.0 2.0) 1.0 2.0))
 
-(test-group "Test exponential" 
+(test-group "Test exponential"
             (define (expected-fraction mean x)
               (- 1 (exp (* (- (/ 1.0 mean)) x))))
-            
+
             (define (test-exp-at-point gen count-to expected)
               (define actual (/ (generator-count
                                   (lambda (n)
@@ -250,7 +250,7 @@
                                 10000.0))
               (test-assert (> actual (* 0.9 expected)))
               (test-assert (< actual (* 1.1 expected))))
-            
+
             (define (test-exp gen mean)
               (test-exp-at-point gen 1 (expected-fraction mean 1))
               (test-exp-at-point gen 2 (expected-fraction mean 2))
@@ -263,7 +263,7 @@
 (test-group "Test geometric"
             (define (expected-fraction p x)
               (* (expt (- 1 p) (- x 1)) p))
-            
+
             (define (test-geom-at-point gen p x)
               (define expected (expected-fraction p x))
               (define actual (/ (generator-count
@@ -274,12 +274,12 @@
               (define ratio (/ actual expected))
               (test-assert (> ratio 0.9))
               (test-assert (< ratio 1.1)))
-            
+
             (define (test-geom gen p)
               (test-geom-at-point gen p 1)
               (test-geom-at-point gen p 3)
               (test-geom-at-point gen p 5))
-            
+
             (test-geom (make-geometric-generator 0.5) 0.5)
             (test-geom (make-geometric-generator default-random-source 0.5) 0.5))
 

@@ -4,7 +4,7 @@
 
 (define make-random-integer-generator
   (case-lambda
-    ((low-bound up-bound) 
+    ((low-bound up-bound)
      (make-random-integer-generator default-random-source low-bound up-bound))
     ((rand-src low-bound up-bound)
      (when (not (random-source? rand-src))
@@ -24,12 +24,12 @@
     (() (make-random-integer-generator low-bound up-bound))
     ((s) (make-random-integer-generator s low-bound up-bound))))
 
-(define make-random-u8-generator (make-int-generator-maker 0 256)) 
-(define make-random-s8-generator (make-int-generator-maker -128 128)) 
-(define make-random-u16-generator (make-int-generator-maker 0 65536)) 
-(define make-random-s16-generator (make-int-generator-maker -32768 32768)) 
-(define make-random-u32-generator (make-int-generator-maker 0 (expt 2 32))) 
-(define make-random-s32-generator (make-int-generator-maker (- (expt 2 31)) (expt 2 31))) 
+(define make-random-u8-generator (make-int-generator-maker 0 256))
+(define make-random-s8-generator (make-int-generator-maker -128 128))
+(define make-random-u16-generator (make-int-generator-maker 0 65536))
+(define make-random-s16-generator (make-int-generator-maker -32768 32768))
+(define make-random-u32-generator (make-int-generator-maker 0 (expt 2 32)))
+(define make-random-s32-generator (make-int-generator-maker (- (expt 2 31)) (expt 2 31)))
 (define make-random-u64-generator (make-int-generator-maker 0 (expt 2 64)))
 (define make-random-s64-generator (make-int-generator-maker (- (expt 2 63)) (expt 2 63)))
 
@@ -41,7 +41,7 @@
       (lambda ()
         (zero? (int-gen)))))))
 
-(define make-random-char-generator 
+(define make-random-char-generator
   (case-lambda
     ((str)
      (make-random-char-generator default-random-source str))
@@ -55,12 +55,12 @@
          (string-ref str (int-gen)))))))
 
 (define make-random-string-generator
-  (case-lambda 
+  (case-lambda
     ((k str) (make-random-string-generator default-random-source k str))
     ((s k str)
      (let ((char-gen (make-random-char-generator s str))
-           (int-gen (make-random-integer-generator s 0 k))) 
-       (lambda () 
+           (int-gen (make-random-integer-generator s 0 k)))
+       (lambda ()
          (generator->string char-gen (int-gen)))))))
 
 (define make-random-real-generator
@@ -89,7 +89,7 @@
     (()
      (make-normal-generator default-random-source 0.0 1.0))
     ((arg1)
-     (cond 
+     (cond
        ((random-source? arg1)
         (make-normal-generator arg1 0.0 1.0))
        (else (make-normal-generator default-random-source arg1 1.0))))
@@ -129,7 +129,7 @@
       (lambda ()
         (ceiling (* c (log (rand-real-proc)))))))))
 
-(define make-poisson-generator 
+(define make-poisson-generator
   (case-lambda
     ((L)
      (make-poisson-generator default-random-source L))
@@ -137,7 +137,7 @@
      (let ((rand-real-proc (random-source-make-reals rand-src)))
       (if (< L 36)
           (make-poisson/small rand-real-proc L)
-          (make-poisson/large rand-real-proc L)))))) 
+          (make-poisson/large rand-real-proc L))))))
 
 ;private
 (define (make-poisson/small rand-real-proc L)
@@ -171,7 +171,7 @@
 
 ;private
 ;log(n!) table for n 1 to 256. Vector, where nth index corresponds to log((n+1)!)
-;Computed on first invocation of `log-of-fact` 
+;Computed on first invocation of `log-of-fact`
 (define log-fact-table #f)
 
 ;private
@@ -192,7 +192,7 @@
 (define (log-of-fact n)
   (when (not log-fact-table)
     (make-log-fact-table!))
-  (cond 
+  (cond
     ((<= n 1) 0)
     ((<= n 256) (vector-ref log-fact-table (- n 1)))
     (else (let ((x (+ n 1)))
@@ -202,7 +202,7 @@
               (* 0.5
                  (log (* 2 PI)))
               (/ 1.0 (* x 12.0)))))))
-   
+
 
 (define (gsampling . args)
   (cond
@@ -214,7 +214,7 @@
 (define (gsampling* s generators-lst)
   (let ((gen-vec (list->vector generators-lst))
         (rand-int-proc (random-source-make-integers s)))
-    
+
        ;remove exhausted generator at index
        (define (remove-gen index)
          (define new-vec (make-vector (- (vector-length gen-vec) 1)))
@@ -225,9 +225,9 @@
          (when (< index (- (vector-length gen-vec) 1))
            (vector-copy! new-vec index gen-vec (+ 1 index)))
          (set! gen-vec new-vec))
-       
+
        ;randomly pick generator. If it's exhausted remove it, and pick again
-       ;returns value (or eof, if all generators are exhausted) 
+       ;returns value (or eof, if all generators are exhausted)
        (define (pick)
          (let* ((index (rand-int-proc (vector-length gen-vec)))
                 (gen (vector-ref gen-vec index))
@@ -239,7 +239,7 @@
                      (eof-object)
                      (pick)))
                value)))
-       
+
        (lambda ()
          (if (= 0 (vector-length gen-vec))
              (eof-object)
@@ -265,16 +265,16 @@
              (when (< (car objs) 0)
                (error "Weight cannot be negative"))
              (loop (cddr objs)
-                   (cons (cons (car objs) (cadr objs)) 
+                   (cons (cons (car objs) (cadr objs))
                          pairs)))))))
 
 ;private
 (define (gweighted-sampling* s weight+generators-lst)
   (let ((weight-sum (apply + (map car weight+generators-lst)))
         (rand-real-proc (random-source-make-reals s)))
-       
+
        ;randomly pick generator. If it's exhausted remove it, and pick again.
-       ;returns value (or eof, if all generators are exhausted) 
+       ;returns value (or eof, if all generators are exhausted)
        (define (pick)
          (let* ((roll (* (rand-real-proc) weight-sum))
                 (picked+rest-gens (pick-weighted-generator roll weight+generators-lst))
@@ -288,7 +288,7 @@
                      (eof-object)
                      (pick)))
                value)))
-       
+
        (lambda ()
          (if (null? weight+generators-lst)
              (eof-object)
@@ -301,7 +301,7 @@
              (weight+gen-lst weight+gen-lst)
              (picked-gen #f)
              (rest-gen-rev '()))
-    (if (null? weight+gen-lst) 
+    (if (null? weight+gen-lst)
         (cons picked-gen (reverse rest-gen-rev))
         (let* ((w+g (car weight+gen-lst)))
          (if (or picked-gen

@@ -1,10 +1,7 @@
 (import
   (srfi-194)
   (scheme base)
-  (scheme cxr)
   (scheme inexact)
-  (scheme list)
-  (scheme write)
   (srfi 27)
   (srfi 64))
 
@@ -12,6 +9,8 @@
   ((library (srfi 158)) (import (srfi 158)))
   ((library (srfi 121)) (import (srfi 121))))
 
+;; for testing custom rand source,
+;; since it's implementation specific
 (cond-expand
   (gauche (import 
             (gauche base)
@@ -48,9 +47,7 @@
       (lambda (num)
         (and (>= num upper-quarter)
              (< num to)))
-      gen))
-  
-  )
+      gen)))
 
 (define (assert-int-generator gen byte-size signed?)
   (define from (if signed?

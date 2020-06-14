@@ -179,9 +179,18 @@ The strings are all less than <var>k</var> characters in length.
 <h3 class="subheading">Nonuniform distributions</h3>
 
 <dl>
-<dt><a name="index-bernoulli"></a><code>(make-bernoulli-generator</code><var> p </var><code>)</code></dt>
+<dt><a name="index-bernoulli"></a><code>(make-bernoulli-generator</code><var> p</var><code>)</code></dt>
 <dd><p>Creates a generator that yields 0 with probability <var>p</var>
 and 1 with probability 1 - <var>p</var>.
+</p></dd></dl>
+<dl>
+<dt><a name="index-categorical"></a><code>(make-categorical-generator</code><var> pvec</var><code>)</code></dt>
+<dd><p>Creates a generator that yields 
+an exact integer <var>n</var> between 0 (inclusive)
+and the length of <var>pvec</var> (exclusive)
+with probability equal to the <var>n</var>th element of <var>pvec</var>.
+It is an error if the sum of the elements of <var>pvec</var>
+is not equal to 1 (in the sense of <code>=</code>).
 </p></dd></dl>
 <dl>
 <dt><a name="index-reals_002dnormal_0024"></a><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>
@@ -222,15 +231,6 @@ When all the generators are exhausted or no generators are specified,
 the new generator returns an end-of-file object.
 </p></dd></dl>
 
-<dl>
-<dt><a name="index-weighted_002dsamples_002dfrom"></a><code>(gweighted-sampling</code> <var> obj</var> ...<code>)</code></dt>
-<dd><p>The arguments alternate between nonnegative real numbers and generators.
-The real number determines the weight, or the relative probability
-that the generator which follows it is chosen.  The sum of the weights doesn&rsquo;t need to
-be 1.0.
-When all the generators are exhausted or no generators are specified,
-the new generator returns an end-of-file object.
-</p></dd></dl>
 
 
 <h1>Implementation</h1>

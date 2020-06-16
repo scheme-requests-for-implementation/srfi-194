@@ -1,9 +1,7 @@
 (import
-  (advanced-random)
+  (srfi-194)
   (scheme base)
-  (scheme cxr)
   (scheme inexact)
-  (scheme list)
   (srfi 27)
   (srfi 64))
 
@@ -11,16 +9,26 @@
   ((library (srfi 158)) (import (srfi 158)))
   ((library (srfi 121)) (import (srfi 121))))
 
-(define (assert-number-generator gen from to)
-  (define range (- to from))
-  (define lower-quarter (+ from (* 0.25 range)))
-  (define upper-quarter (- to (* 0.25 range)))
+;; for testing custom rand source,
+;; since it's implementation specific
+(cond-expand
+  (gauche (import 
+            (gauche base)
+            (math mt-random))))
+
+(define (assert-number-generator/all-in-range gen from to)
   (test-assert
     (generator-every
       (lambda (num)
         (and (>= num from)
              (< num to)))
-      (gtake gen 10000)))
+      (gtake gen 1000))))
+
+(define (assert-number-generator gen from to)
+  (define range (- to from))
+  (define lower-quarter (+ from (* 0.25 range)))
+  (define upper-quarter (- to (* 0.25 range)))
+  (assert-number-generator/all-in-range gen from to)
   (test-assert
     (generator-any
       (lambda (num)
@@ -50,14 +58,51 @@
                  (expt 2 byte-size)))
   (assert-number-generator gen from to))
 
-(test-begin "Advanced random")
+(test-begin "srfi-194")
+
+(test-group "Test with-random-source syntax"
+            ;;create and consume generators that are made with different source
+            ;;with various order, and check that order doesn't change the outcome
+            (define (test-multiple-sources gen1-maker gen1-expect 
+                                           gen2-maker gen2-expect)
+              
+              ;;create gen1, consume gen1, create gen2, consume gen2
+              (let ((gen1 (gen1-maker)))
+               (test-equal (generator->list gen1) gen1-expect)
+               (let ((gen2 (gen2-maker)))
+                (test-equal (generator->list gen2) gen2-expect)))
+              
+              ;;create gen1, create gen2, consume gen1, consume gen2
+              (let ((gen1 (gen1-maker))
+                    (gen2 (gen2-maker)))
+                (test-equal (generator->list gen1) gen1-expect)
+                (test-equal (generator->list gen2) gen2-expect)))
+            
+            (define multiple-sources-testcase
+              (cond-expand
+                (gauche (list (lambda ()
+                                (gtake (with-random-source
+                                       (make <mersenne-twister> :seed 0)
+                                       make-random-integer-generator 0 10) 
+                                     5))
+                              '(5 5 7 8 6)
+                              (lambda ()
+                                (gtake (with-random-source
+                                       (make <mersenne-twister> :seed 1)
+                                       make-random-integer-generator 0 10) 
+                                     5))
+                              '(4 9 7 9 0)))
+                (else #f)))
+            
+            (when multiple-sources-testcase
+              (apply test-multiple-sources multiple-sources-testcase))
+            
+            (with-random-source default-random-source
+                                make-random-integer-generator 0 10))
 
 (test-group "Test random int"
             (assert-number-generator
               (make-random-integer-generator 1 100)
-              1 100)
-            (assert-number-generator
-              (make-random-integer-generator default-random-source 1 100)
               1 100)
 
             (for-each
@@ -65,8 +110,7 @@
                 (define make-gen (car testcase))
                 (define byte-size (cadr testcase))
                 (define signed? (caddr testcase))
-                (assert-int-generator (make-gen) byte-size signed?)
-                (assert-int-generator (make-gen default-random-source) byte-size signed?))
+                (assert-int-generator (make-gen) byte-size signed?))
               (list
                 (list make-random-u8-generator 8 #f)
                 (list make-random-s8-generator 8 #t)
@@ -75,7 +119,18 @@
                 (list make-random-u32-generator 32 #f)
                 (list make-random-s32-generator 32 #t)
                 (list make-random-u64-generator 64 #f)
-                (list make-random-s64-generator 64 #t))))
+                (list make-random-s64-generator 64 #t)))
+            
+            ;;test u1 separately, since it will fail quarter checks due to small range
+            (assert-number-generator/all-in-range (make-random-u1-generator) 0 2)
+            (test-assert
+              (generator-any
+                (lambda (v) (= v 0))
+                (gtake (make-random-u1-generator) 100)))
+            (test-assert
+              (generator-any
+                (lambda (v) (= v 1))
+                (gtake (make-random-u1-generator) 100))))
 
 (test-group "Test random real"
             (assert-number-generator
@@ -97,13 +152,6 @@
                 (gtake (make-random-boolean-generator) 10000)))
 
             (test-assert
-              (generator-every
-                (lambda (v)
-                  (or (eq? v #t)
-                      (eq? v #f)))
-                (gtake (make-random-boolean-generator default-random-source) 10000)))
-
-            (test-assert
               (generator-any
                 (lambda (v)
                   (eq? #t v))
@@ -122,14 +170,6 @@
                   (or (equal? v #\a)
                       (equal? v #\b)))
                 (gtake (make-random-char-generator "ab")
-                       10000)))
-
-            (test-assert
-              (generator-every
-                (lambda (v)
-                  (or (equal? v #\a)
-                      (equal? v #\b)))
-                (gtake (make-random-char-generator default-random-source "ab")
                        10000)))
 
             (test-assert
@@ -157,32 +197,20 @@
                        10000)))
 
             (test-assert
-              (generator-every
-                (lambda (str)
-                  (and (< (string-length str) 5)
-                       (every (lambda (c)
-                                   (or (equal? c #\a)
-                                         (equal? c #\b)))
-                                 (string->list str))))
-                (gtake (make-random-string-generator default-random-source 5 "ab")
-                       10000)))
-
-            (test-assert
-              (generator-every
-                (lambda (str)
-                  (and (< (string-length str) 5)
-                       (every (lambda (c)
-                                   (or (equal? c #\a)
-                                         (equal? c #\b)))
-                                 (string->list str))))
-                (gtake (make-random-string-generator default-random-source 5 "ab")
-                       10000)))
-
-            (test-assert
               (generator-any
                 (lambda (str)
                   (equal? "abb" str))
                 (make-random-string-generator 4 "ab"))))
+
+(test-group "Test Bernoulli"
+            (define g (make-bernoulli-generator 0.7))
+            (define expect 7000)
+            (define actual (generator-count
+                                (lambda (i) (= i 0))
+                                (gtake g 10000)))
+            (define ratio (inexact (/ actual expect)))
+            (test-assert (> ratio 0.9))
+            (test-assert (< ratio 1.1)))
 
 (test-group "Test poisson"
             ;;TODO import from somewhere?
@@ -203,12 +231,11 @@
                                      (gtake poisson-gen 10000))
                                    10000))
                  (define ratio (inexact (/ actual expect)))
-                 (test-assert (> ratio 0.9))
-                 (test-assert (< ratio 1.1)))
+                 (test-assert (> ratio 0.8))
+                 (test-assert (< ratio 1.2)))
                (list->generator test-points)))
 
             (test-poisson 2 (make-poisson-generator 2) '(1 2 3))
-            (test-poisson 2 (make-poisson-generator default-random-source 2) '(1 2 3))
             (test-poisson 40 (make-poisson-generator 40) '(30 40 50))
             (test-poisson 280 (make-poisson-generator 280) '(260 280 300)))
 
@@ -233,10 +260,8 @@
               (test-normal-at-point gen mean (+ mean (* 3 deviation)) frac-at-3dev))
 
             (test-normal (make-normal-generator) 0.0 1.0)
-            (test-normal (make-normal-generator default-random-source) 0.0 1.0)
             (test-normal (make-normal-generator 1.0) 1.0 1.0)
-            (test-normal (make-normal-generator 1.0 2.0) 1.0 2.0)
-            (test-normal (make-normal-generator default-random-source 1.0 2.0) 1.0 2.0))
+            (test-normal (make-normal-generator 1.0 2.0) 1.0 2.0))
 
 (test-group "Test exponential"
             (define (expected-fraction mean x)
@@ -257,7 +282,6 @@
               (test-exp-at-point gen 3 (expected-fraction mean 3)))
 
             (test-exp (make-exponential-generator 1) 1)
-            (test-exp (make-exponential-generator default-random-source 1) 1)
             (test-exp (make-exponential-generator 1.5) 1.5))
 
 (test-group "Test geometric"
@@ -280,16 +304,12 @@
               (test-geom-at-point gen p 3)
               (test-geom-at-point gen p 5))
 
-            (test-geom (make-geometric-generator 0.5) 0.5)
-            (test-geom (make-geometric-generator default-random-source 0.5) 0.5))
+            (test-geom (make-geometric-generator 0.5) 0.5))
 
 (test-group "Test uniform sampling"
             (test-equal
               '()
               (generator->list (gsampling)))
-            (test-equal
-              '()
-              (generator->list (gsampling default-random-source)))
             (test-equal
               '()
               (generator->list (gsampling (generator) (generator))))
@@ -305,15 +325,12 @@
               (generator-any
                 (lambda (el)
                   (= el 2))
-                (gsampling default-random-source (circular-generator 1) (circular-generator 2)))))
+                (gsampling (circular-generator 1) (circular-generator 2)))))
 
 (test-group "Test weighted sampling"
             (test-equal
               '()
               (generator->list (gweighted-sampling)))
-            (test-equal
-              '()
-              (generator->list (gweighted-sampling default-random-source)))
             (test-equal
               '()
               (generator->list (gweighted-sampling 1 (generator) 2 (generator))))
@@ -329,7 +346,7 @@
               (generator-any
                 (lambda (el)
                   (= el 2))
-                (gweighted-sampling default-random-source 1 (circular-generator 1) 2 (circular-generator 2))))
+                (gweighted-sampling 1 (circular-generator 1) 2 (circular-generator 2))))
             (let ((expected (/ 1 3))
                   (actual (/ (generator-count
                                (lambda (el) (= el 1))
@@ -339,5 +356,5 @@
               (test-assert (> actual (* 0.9 expected)))
               (test-assert (< actual (* 1.1 expected)))))
 
-(test-end "Advanced random")
+(test-end "srfi-194")
 

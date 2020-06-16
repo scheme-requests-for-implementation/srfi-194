@@ -43,10 +43,13 @@ None at present.
 <h1>Rationale</h1>
 
 <p>Most of SRFI 27 is involved with creating and managing random
-sources; there are only two interfaces for getting random numbers,
+sources; there are only two generators for getting random numbers,
 namely <code>random-integer</code> to get a random but bounded
 non-negative exact integer, and <code>random-real</code> to get a
-random inexact real number in the unit interval.</p>
+random inexact real number in the unit interval.
+(When making use of a non-default random number source, the otherwise
+equivalent procedures <code>random-source-make-integers</code>
+and <code>random-source-make-reals</code> can be used instead.)
 
 <p>However, it's very often useful to loosen these limitations, to
 provide random exact integers or real numbers within any desired
@@ -58,7 +61,7 @@ booleans, random characters chosen from a seed string, and strings
 of random lengths up to a limit and with characters drawn from the
 same kind of seed string are all available.</p>
 
-<p>All these use a rectangular distribution of random numbers, but
+<p>All these use a uniform distribution of random numbers, but
 normal, exponential, geometric, and Poisson distributions also have
 their uses.  Finally, if multiple generators are available, uniform
 and weighted choices can be made from them to produce a unified
@@ -66,21 +69,37 @@ output stream.</p>
 
 <h1>Specification</h1>
 
-<p>The argument <i>s</i> below, which is always optional, is a SRFI 27 random source.
-If <i>s</i> is omitted, <code>default-random-source</code> from SRFI 27 is used.
+<a name="Current-random-source"></a>
+<h3 class="subheading">Current random source</h3>
 
-<a name="Generators-of-primitive-data-types"></a>
-<h3 class="subheading">Generators of primitive data types</h3>
+<dt><a name="current_random_source"></a><code>current-random-source</code></dt>
 
-<p>These generators generate uniformly distributed data.
-</p>
+<p>An R7RS or SRFI 39 parameter that provides the random source
+for all the procedures in this SRFI.
+Its initial value is <code>default-random-source</code>
+from SRFI 27.
+Use <code>parameterize</code> to specify a block of code
+in which a different SRFI 27 random source is used.
+Parameterizing does not affect the behavior of existing generators.
+
+<dt><a name="with_random_source"></a><code>(with-random-source</code><var> random-source proc arg ...</var><code>)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[syntax]</dt>
+
+<p>Binds <code>current-random-source</code> to <var>random-source</var>
+and then applies <var>proc</var> to <var>args</var>.
+This is shorthand for calling a single procedure in this SRFI
+with a different random source.
+<a name="Uniform distributions">
+<h3 class="subheading">Uniform distributions</h3>
+
+<p>These generators generate uniformly distributed values
+of various simple Scheme types.</p>
 <p>In the following examples, we use the <code>generator-&gt;list</code> procedure to show
 some concrete data from the generators.
 </p>
 <dl>
-<dt><a name="index-integers_002dbetween_0024"></a><code>(make-random-integer-generator</code><i> [ s ] lower-bound  upper-bound</i><code>)</code></dt>
+<dt><a name="index-integers_002dbetween_0024"></a><code>(make-random-integer-generator</code><var> lower-bound  upper-bound</var><code>)</code></dt>
 <dd><p>Create exact integer generators.  Creates a generator that generates integers between
-<var>lower-bound</var> (inclusive, default 0) and <var>upper-bound</var> (exclusive) uniformly.
+<var>lower-bound</var> (inclusive) and <var>upper-bound</var> (exclusive) uniformly.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">;; A die roller
 (define die (make-random-integer-generator 1 7))
@@ -92,44 +111,54 @@ some concrete data from the generators.
 </dd></dl>
 
 <dl>
-<dt><a name="index-int8s"></a><code>(make-random-u8-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-uint8s"></a><code>(make-random-s8-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-int16s"></a><code>(make-random-u16-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-uint16s"></a><code>(make-random-s16-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-int32s"></a><code>(make-random-u32-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-uint32s"></a><code>(make-random-s32-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-int64s"></a><code>(make-random-u64-generator</code><i>  [ s ]</i><code>)</code></dt>
-<dt><a name="index-uint64s"></a><code>(make-random-s64-generator</code><i>  [ s ]</i><code>)</code></dt>
+<dt><a name="index-int1s"></a><code>(make-random-u1-generator</code><code>)</code></dt>
+<dt><a name="index-int8s"></a><code>(make-random-u8-generator</code><code>)</code></dt>
+<dt><a name="index-uint8s"></a><code>(make-random-s8-generator</code><code>)</code></dt>
+<dt><a name="index-int16s"></a><code>(make-random-u16-generator</code><code>)</code></dt>
+<dt><a name="index-uint16s"></a><code>(make-random-s16-generator</code><code>)</code></dt>
+<dt><a name="index-int32s"></a><code>(make-random-u32-generator</code><code>)</code></dt>
+<dt><a name="index-uint32s"></a><code>(make-random-s32-generator</code><code>)</code></dt>
+<dt><a name="index-int64s"></a><code>(make-random-u64-generator</code><code>)</code></dt>
+<dt><a name="index-uint64s"></a><code>(make-random-s64-generator</code><code>)</code></dt>
 <dd><p>Return uniform integer generators that generate integers in the ranges of
+1-bit unsigned and
 8, 16, 32, and 64-bit signed and unsigned integers.
-</p>
+These values can be stored in the corresponding
+<a href="http://srfi.schemers.org/srfi-160/srfi-160.html">SRFI 160</a>
+homogeneous vectors.</p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(generator-&gt;list (make-random-s8-generator) 10)
  &rArr; (20 -101 50 -99 -111 -28 -19 -61 39 110)
 </pre></td></tr></table>
 </dd></dl>
 
-<dt><a name="index-reals_002dbetween_0024"></a><code>(make-random-real-generator</code><i> [ s ] lower-bound upper-bound</i><code>)</code></dt>
+<dt><a name="index-reals_002dbetween_0024"></a><code>(make-random-real-generator</code><var> lower-bound upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact real numbers uniformly.
+(Note that this is not the same as returning all possible IEEE
+floats within the stated range uniformly.)
 The procedure returns reals between
-<var>lower-bound</var> and <var>upper-bound</var>, both inclusive.
+<var>lower-bound</var> and <var>upper-bound</var>, both exclusive.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 
 (generator-&gt;list uniform-100 10)
- &rArr; (81.67965004942268 81.84927577572596 53.02443813660833)
+ &rArr; (81.67965004942268 81.84927577572596 53.02443813660833) ; cannot generate 0 or 100
 </pre></td></tr></table>
 
-<p>Note that a generator from <code>make-random-real-generator</code> can generate the upper-bound, as opposed to <code>make-random-integer-generator</code>.  If you need to exclude
-the bound value, just discard it; SRFI 158 <code>gfilter</code> may come
-handy.
-</p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define generate-from-0-below-1
   (gfilter (lambda (r) (not (= r 1.0))) (make-random-real-generator 0.0 1.0)))
 </pre></td></tr></table>
 </dd></dl>
 
+<dt><a name="index-complexs_002dbetween_0024"></a><code>(make-random-complex-generator</code><var> real-lower-bound imag-lower-bound real-upper-bound imag-upper-bound</var><code>)</code></dt>
+<dd><p>Returns a generator that generates inexact complex numbers uniformly.
+The procedure returns complex numbers whose real part is between
+<var>real-lower-bound</var> and <var>real-upper-bound</var>, both exclusive,
+and whose complex part is between
+<var>imag-lower-bound</var> and <var>imag-upper-bound</var>, both exclusive.
+</p>
+</dd></dl>
 <dl>
-<dt><a name="index-booleans"></a><code>(make-random-boolean-generator</code> <i> [ s ] </i></dt>
+<dt><a name="index-booleans"></a><code>(make-random-boolean-generator)</code></dt>
 <dd><p>Generates boolean values (<code>#f</code> and <code>#t</code>) with equal probability.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(generator-&gt;list (make-random-boolean-generator) 10)
@@ -138,7 +167,7 @@ handy.
 </dd></dl>
 
 <dl>
-<dt><a name="index-chars_0024"></a><code>(make-random-char-generator</code><i> [ s ] string</i><code>)</code></dt>
+<dt><a name="index-chars_0024"></a><code>(make-random-char-generator</code><var> string</var><code>)</code></dt>
 <dd><p>Returns a generator that generates characters in <var>string</var> uniformly.
 </p>
 <table><tr><td>&nbsp;</td>
@@ -152,8 +181,9 @@ handy.
 </dd></dl>
 
 <dl>
-<dt><a name="index-chars_0024b"></a><code>(make-random-string-generator</code><i> [ s ] string<code>)</code></i></dt>
+<dt><a name="index-chars_0024b"></a><code>(make-random-string-generator</code><var> k string<code>)</code></var></dt>
 <dd><p>Returns a generator that generates random strings whose characters are in <var>string</var>.
+Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
 The strings are all less than <var>k</var> characters in length.
 </p>
 </dd></dl>
@@ -162,27 +192,41 @@ The strings are all less than <var>k</var> characters in length.
 <h3 class="subheading">Nonuniform distributions</h3>
 
 <dl>
-<dt><a name="index-reals_002dnormal_0024"></a><code>(make-normal-generator</code><i> [ s ] [ mean [ deviation ] ]</i><code>)</code></dt>
+<dt><a name="index-bernoulli"></a><code>(make-bernoulli-generator</code><var> p</var><code>)</code></dt>
+<dd><p>Creates a generator that yields 0 with probability <var>p</var>
+and 1 with probability 1 - <var>p</var>.
+</p></dd></dl>
+<dl>
+<dt><a name="index-categorical"></a><code>(make-categorical-generator</code><var> pvec</var><code>)</code></dt>
+<dd><p>Creates a generator that yields 
+an exact integer <var>n</var> between 0 (inclusive)
+and the length of <var>pvec</var> (exclusive)
+with probability equal to the <var>n</var>th element of <var>pvec</var>.
+It is an error if the sum of the elements of <var>pvec</var>
+is not equal to 1 (in the sense of <code>=</code>).
+</p></dd></dl>
+<dl>
+<dt><a name="index-reals_002dnormal_0024"></a><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>
 <dd><p>Creates a generator that yields real numbers from a normal distribution
 with the specified <var>mean</var> and <var>deviation</var>.  The default value of <var>mean</var> is 0.0
 and <var>deviation</var> is 1.0.
 </p></dd></dl>
 
 <dl>
-<dt><a name="index-reals_002dexponential_0024"></a><code>(make-exponential-generator</code><i> [ s ] mean</i><code>)</code></dt>
+<dt><a name="index-reals_002dexponential_0024"></a><code>(make-exponential-generator</code><var> mean</var><code>)</code></dt>
 <dd><p>Creates a generator that yields real numbers from an exponential distribution
 with the specified <var>mean</var>.
 </p></dd></dl>
 
 <dl>
-<dt><a name="index-integers_002dgeometric_0024"></a><code>(make-geometric-generator</code><i> [ s ] p</i><code>)</code></dt>
+<dt><a name="index-integers_002dgeometric_0024"></a><code>(make-geometric-generator</code><var> p</var><code>)</code></dt>
 <dd><p>Creates a generator that yields integers from the geometric distribution
 with success probability <var>p</var> (0 &lt;= p &lt;= 1).  The mean is <code>1/p</code> and
 variance is <code>(1-p)/p^2</code>.
 </p></dd></dl>
 
 <dl>
-<dt><a name="index-integers_002dpoisson_0024"></a><code>(make-poisson-generator</code><i> [ s ] L</i><code>)</code></dt>
+<dt><a name="index-integers_002dpoisson_0024"></a><code>(make-poisson-generator</code><var> L</var><code>)</code></dt>
 <dd><p>Creates a generator that yields integers from the Poisson distribution with
 mean <var>L</var>, variance <var>L</var>.
 </p></dd></dl>
@@ -191,8 +235,8 @@ mean <var>L</var>, variance <var>L</var>.
 <h3 class="subheading">Generator operations</h3>
 
 <dl>
-<dt><a name="index-samples_002dfrom"></a><code>(gsampling</code><i> [ s ] generator</i> ...<code>)</code></dt>
-<dd><p>Takes the <i>generators</i>
+<dt><a name="index-samples_002dfrom"></a><code>(gsampling</code><var> generator</var> ...<code>)</code></dt>
+<dd><p>Takes the <var>generators</var>
 and returns a new generator.  Every time the resulting generator is called,
 it picks one of the input generators with equal probability, then
 calls it to get a value.
@@ -200,15 +244,6 @@ When all the generators are exhausted or no generators are specified,
 the new generator returns an end-of-file object.
 </p></dd></dl>
 
-<dl>
-<dt><a name="index-weighted_002dsamples_002dfrom"></a><code>(gweighted-sampling)</code> <i>[ s ] obj</i> ..<code>)</code>.</dt>
-<dd><p>The arguments alternate between nonnegative real numbers and generators.
-The real number determines the weight, or the relative probability
-that the generator which follows it is chosen.  The sum of the weights doesn&rsquo;t need to
-be 1.0.
-When all the generators are exhausted or no generators are specified,
-the new generator returns an end-of-file object.
-</p></dd></dl>
 
 
 <h1>Implementation</h1>
@@ -230,10 +265,11 @@ it.  Arvydas Silanskas began by asking why the next R7RS-large
 ballot was so delayed, and ended up volunteering to write code for
 the parts already specified.  This is his first such implementation,
 and in the process of writing it he found a number of errors in the specification
-as well, which John was very glad to see.</p>
+as well, which John was very glad to be told about.</p>
 
 <p>Thanks also to the Scheme community and especially the contributors
-to the SRFI 194 mailing list.</p>
+to the SRFI 194 mailing list, including
+Shiro Kawai, Bradley Lucier, and Marc Nieper-Wißkirchen.</p>
 
 <h1>Copyright</h1>
 

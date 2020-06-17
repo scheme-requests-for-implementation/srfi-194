@@ -2,6 +2,7 @@
   (srfi-194)
   (scheme base)
   (scheme inexact)
+  (scheme complex)
   (srfi 27)
   (srfi 64))
 
@@ -143,6 +144,26 @@
                   (not (= v (floor v))))
                 (make-random-real-generator 1.0 5.0))))
 
+(test-group "Test complex"
+            (assert-number-generator
+              (gmap
+                real-part
+                (make-random-complex-generator -10.0 -100.0 10.0 100.0)) 
+              -10 10)
+            
+            (assert-number-generator
+              (gmap
+                imag-part
+                (make-random-complex-generator -100.0 -10.0 100.0 10.0)) 
+              -10 10)
+            
+            (test-assert
+              (generator-any
+                (lambda (num)
+                  (and (not (= 0 (real-part num)))
+                       (not (= 0 (imag-part num)))))
+                (make-random-complex-generator -10.0 -10.0 10.0 10.0))))
+
 (test-group "Test random bool"
             (test-assert
               (generator-every
@@ -211,6 +232,24 @@
             (define ratio (inexact (/ actual expect)))
             (test-assert (> ratio 0.9))
             (test-assert (< ratio 1.1)))
+
+(test-group "Test categorical"
+            (define result-vec (vector 0 0 0))
+            (define expect-vec (vector 2000 5000 3000))
+            (define pvec (vector 0.2 0.5 0.3))
+            (define g (make-categorical-generator pvec))
+            (generator-for-each
+              (lambda (i)
+                (vector-set! result-vec i (+ 1 (vector-ref result-vec i))))
+              (gtake g 10000))
+            (vector-for-each
+              (lambda (result expect)
+                (define ratio (inexact (/ result expect)))
+                (test-assert (>  ratio 0.9))
+                (test-assert (< ratio 1.1))) 
+              result-vec
+              expect-vec)
+            (test-error (make-categorical-generator (vector 0.5))))
 
 (test-group "Test poisson"
             ;;TODO import from somewhere?
@@ -327,34 +366,7 @@
                   (= el 2))
                 (gsampling (circular-generator 1) (circular-generator 2)))))
 
-(test-group "Test weighted sampling"
-            (test-equal
-              '()
-              (generator->list (gweighted-sampling)))
-            (test-equal
-              '()
-              (generator->list (gweighted-sampling 1 (generator) 2 (generator))))
-            (test-equal
-              '(1 1 1)
-              (generator->list (gweighted-sampling 1 (generator) 2 (generator 1 1 1))))
-            (test-assert
-              (generator-any
-                (lambda (el)
-                  (= el 1))
-                (gweighted-sampling 1 (circular-generator 1) 2 (circular-generator 2))))
-            (test-assert
-              (generator-any
-                (lambda (el)
-                  (= el 2))
-                (gweighted-sampling 1 (circular-generator 1) 2 (circular-generator 2))))
-            (let ((expected (/ 1 3))
-                  (actual (/ (generator-count
-                               (lambda (el) (= el 1))
-                               (gtake (gweighted-sampling 1 (circular-generator 1) 2 (circular-generator 2))
-                                      10000))
-                             10000.0)))
-              (test-assert (> actual (* 0.9 expected)))
-              (test-assert (< actual (* 1.1 expected)))))
+
 
 (test-end "srfi-194")
 

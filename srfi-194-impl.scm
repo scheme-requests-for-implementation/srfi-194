@@ -55,6 +55,13 @@
     (lambda ()
       (+ low-bound (* range (rand-real-proc))))))
 
+(define (make-random-complex-generator real-lower-bound imag-lower-bound
+                                       real-upper-bound imag-upper-bound)
+  (let ((real-gen (make-random-real-generator real-lower-bound real-upper-bound))
+        (imag-gen (make-random-real-generator imag-lower-bound imag-upper-bound)))
+    (lambda ()
+      (make-rectangular (real-gen) (imag-gen)))))
+
 (define (make-random-boolean-generator)
   (define u1 (make-random-u1-generator))
   (lambda ()
@@ -88,6 +95,28 @@
          0
          1))))
 
+(define (make-categorical-generator pvec)
+  (define prob-sum
+    (vector-fold 
+      (lambda (sum p)
+        (unless (and (number? p)
+                     (> p 0))
+          (error "parameter must be a vector of positive numbers"))
+        (+ sum p))
+      0
+      pvec))
+  (unless (= prob-sum 1)
+    (error "sum of given probabilities must be equal to 1"))
+  (let ((real-gen (make-random-real-generator 0 1)))
+   (lambda ()
+     (define roll (real-gen))
+     (let it ((sum 0)
+              (i 0))
+       (if (< roll (+ sum (vector-ref pvec i)))
+           i
+           (it (+ sum (vector-ref pvec i))
+               (+ i 1)))))))
+
 (define make-normal-generator
   (case-lambda
     (()
@@ -95,12 +124,18 @@
     ((mean)
      (make-normal-generator mean 1.0))
     ((mean deviation)
-     (let ((rand-real-proc (random-source-make-reals (current-random-source))))
+     (let ((rand-real-proc (random-source-make-reals (current-random-source)))
+           (state #f))
       (lambda ()
         ;;Box-Muller
-        (let ((r (sqrt (* -2 (log (rand-real-proc)))))
-              (theta (* 2 PI (rand-real-proc))))
-          (+ mean (* deviation r (sin theta)))))))))
+        (if state
+            (let ((result state))
+             (set! state #f)
+             result)
+            (let ((r (sqrt (* -2 (log (rand-real-proc)))))
+                  (theta (* 2 PI (rand-real-proc))))
+              (set! state (+ mean (* deviation r (cos theta))))
+              (+ mean (* deviation r (sin theta))))))))))
 
 (define (make-exponential-generator mean)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
@@ -113,6 +148,12 @@
     (lambda ()
       (ceiling (* c (log (rand-real-proc)))))))
 
+;; Draw from poisson distribution with mean L, variance L.
+;; For small L, we use Knuth's method.  For larger L, we use rejection
+;; method by Atkinson, The Computer Generation of Poisson Random Variables,
+;; J. of the Royal Statistical Society Series C (Applied Statistics), 28(1),
+;; pp29-35, 1979.  The code here is a port by John D Cook's C++ implementation
+;; (http://www.johndcook.com/stand_alone_code.html )
 (define (make-poisson-generator L)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (if (< L 36)
@@ -219,71 +260,4 @@
              (eof-object)
              (pick)))))
 
-(define (gweighted-sampling . args)
-  (gweighted-sampling* (group-weights-with-generators args)))
 
-;private
-;converts flat list of interweaving weights and generators
-;to a list of weight+generator pairs
-(define (group-weights-with-generators objs)
-  (let loop ((objs objs)
-             (pairs '()))
-    (cond
-      ((null? objs) (reverse pairs))
-      (else (begin
-             (when (null? (cdr objs))
-               (error "Uneven amount of arguments provided"))
-             (when (not (number? (car objs)))
-               (error "Expected number"))
-             (when (< (car objs) 0)
-               (error "Weight cannot be negative"))
-             (loop (cddr objs)
-                   (cons (cons (car objs) (cadr objs))
-                         pairs)))))))
-
-;private
-(define (gweighted-sampling* weight+generators-lst)
-  (let ((weight-sum (apply + (map car weight+generators-lst)))
-        (rand-real-proc (random-source-make-reals (current-random-source))))
-
-       ;randomly pick generator. If it's exhausted remove it, and pick again.
-       ;returns value (or eof, if all generators are exhausted)
-       (define (pick)
-         (let* ((roll (* (rand-real-proc) weight-sum))
-                (picked+rest-gens (pick-weighted-generator roll weight+generators-lst))
-                (picked-gen (car picked+rest-gens))
-                (value ((cdr picked-gen))))
-           (if (eof-object? value)
-               (begin
-                 (set! weight+generators-lst (cdr picked+rest-gens))
-                 (set! weight-sum (apply + (map car weight+generators-lst)))
-                 (if (null? weight+generators-lst)
-                     (eof-object)
-                     (pick)))
-               value)))
-
-       (lambda ()
-         (if (null? weight+generators-lst)
-             (eof-object)
-             (pick)))))
-
-;private
-;returns pair, where car is picked generator, and cdr is list of rest generators in preserved order
-(define (pick-weighted-generator roll weight+gen-lst)
-  (let loop ((sum 0)
-             (weight+gen-lst weight+gen-lst)
-             (picked-gen #f)
-             (rest-gen-rev '()))
-    (if (null? weight+gen-lst)
-        (cons picked-gen (reverse rest-gen-rev))
-        (let* ((w+g (car weight+gen-lst)))
-         (if (or picked-gen
-                 (< (+ sum (car w+g)) roll))
-             (loop (+ sum (car w+g))
-                   (cdr weight+gen-lst)
-                   picked-gen
-                   (cons w+g rest-gen-rev))
-             (loop (+ sum (car w+g))
-                   (cdr weight+gen-lst)
-                   w+g
-                   rest-gen-rev))))))

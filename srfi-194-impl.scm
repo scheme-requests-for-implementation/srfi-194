@@ -17,14 +17,14 @@
 ;;
 
 (define (make-random-integer-generator low-bound up-bound)
-     (when (not (integer? low-bound))
-       (error "expected integer"))
-     (when (not (integer? up-bound))
-       (error "expected integer"))
-     (let ((rand-int-proc (random-source-make-integers (current-random-source)))
-           (range (- up-bound low-bound)))
-       (lambda ()
-         (+ low-bound (rand-int-proc range)))))
+  (when (not (integer? low-bound))
+    (error "expected integer"))
+  (when (not (integer? up-bound))
+    (error "expected integer"))
+  (let ((rand-int-proc (random-source-make-integers (current-random-source)))
+        (range (- up-bound low-bound)))
+    (lambda ()
+      (+ low-bound (rand-int-proc range)))))
 
 (define (make-random-u1-generator)
   (make-random-integer-generator 0 2))
@@ -126,16 +126,16 @@
     ((mean deviation)
      (let ((rand-real-proc (random-source-make-reals (current-random-source)))
            (state #f))
-      (lambda ()
-        ;;Box-Muller
-        (if state
-            (let ((result state))
-             (set! state #f)
-             result)
-            (let ((r (sqrt (* -2 (log (rand-real-proc)))))
-                  (theta (* 2 PI (rand-real-proc))))
-              (set! state (+ mean (* deviation r (cos theta))))
-              (+ mean (* deviation r (sin theta))))))))))
+       (lambda ()
+         ;;Box-Muller
+         (if state
+             (let ((result state))
+              (set! state #f)
+              result)
+             (let ((r (sqrt (* -2 (log (rand-real-proc)))))
+                   (theta (* 2 PI (rand-real-proc))))
+               (set! state (+ mean (* deviation r (cos theta))))
+               (+ mean (* deviation r (sin theta))))))))))
 
 (define (make-exponential-generator mean)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
@@ -199,13 +199,13 @@
 ;computes log-fact-table
 ;log(n!) = log((n-1)!) + log(n)
 (define (make-log-fact-table!)
-   (define table (make-vector 256))
-   (vector-set! table 0 0)
-   (do ((i 1 (+ i 1)))
-       ((> i 255) #t)
-       (vector-set! table i (+ (vector-ref table (- i 1))
-                               (log (+ i 1)))))
-   (set! log-fact-table table))
+  (define table (make-vector 256))
+  (vector-set! table 0 0)
+  (do ((i 1 (+ i 1)))
+      ((> i 255) #t)
+      (vector-set! table i (+ (vector-ref table (- i 1))
+                              (log (+ i 1)))))
+  (set! log-fact-table table))
 
 ;private
 ;returns log(n!)
@@ -230,34 +230,34 @@
   (let ((gen-vec (list->vector generators-lst))
         (rand-int-proc (random-source-make-integers (current-random-source))))
 
-       ;remove exhausted generator at index
-       (define (remove-gen index)
-         (define new-vec (make-vector (- (vector-length gen-vec) 1)))
-         ;when removing anything but first, copy all elements before index
-         (when (> index 0)
-           (vector-copy! new-vec 0 gen-vec 0 index))
-         ;when removing anything but last, copy all elements after index
-         (when (< index (- (vector-length gen-vec) 1))
-           (vector-copy! new-vec index gen-vec (+ 1 index)))
-         (set! gen-vec new-vec))
+    ;remove exhausted generator at index
+    (define (remove-gen index)
+      (define new-vec (make-vector (- (vector-length gen-vec) 1)))
+      ;when removing anything but first, copy all elements before index
+      (when (> index 0)
+        (vector-copy! new-vec 0 gen-vec 0 index))
+      ;when removing anything but last, copy all elements after index
+      (when (< index (- (vector-length gen-vec) 1))
+        (vector-copy! new-vec index gen-vec (+ 1 index)))
+      (set! gen-vec new-vec))
 
-       ;randomly pick generator. If it's exhausted remove it, and pick again
-       ;returns value (or eof, if all generators are exhausted)
-       (define (pick)
-         (let* ((index (rand-int-proc (vector-length gen-vec)))
-                (gen (vector-ref gen-vec index))
-                (value (gen)))
-           (if (eof-object? value)
-               (begin
-                 (remove-gen index)
-                 (if (= (vector-length gen-vec) 0)
-                     (eof-object)
-                     (pick)))
-               value)))
+    ;randomly pick generator. If it's exhausted remove it, and pick again
+    ;returns value (or eof, if all generators are exhausted)
+    (define (pick)
+      (let* ((index (rand-int-proc (vector-length gen-vec)))
+             (gen (vector-ref gen-vec index))
+             (value (gen)))
+        (if (eof-object? value)
+            (begin
+              (remove-gen index)
+              (if (= (vector-length gen-vec) 0)
+                  (eof-object)
+                  (pick)))
+            value)))
 
-       (lambda ()
-         (if (= 0 (vector-length gen-vec))
-             (eof-object)
-             (pick)))))
+    (lambda ()
+      (if (= 0 (vector-length gen-vec))
+          (eof-object)
+          (pick)))))
 
 

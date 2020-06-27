@@ -117,6 +117,8 @@
            (it (+ sum (vector-ref pvec i))
                (+ i 1)))))))
 
+;; This generator uses Box-Muller method, and uses both returned values
+;; NOTE: this implementation is not thread safe
 (define make-normal-generator
   (case-lambda
     (()
@@ -127,7 +129,6 @@
      (let ((rand-real-proc (random-source-make-reals (current-random-source)))
            (state #f))
        (lambda ()
-         ;;Box-Muller
          (if state
              (let ((result state))
               (set! state #f)
@@ -154,6 +155,10 @@
 ;; J. of the Royal Statistical Society Series C (Applied Statistics), 28(1),
 ;; pp29-35, 1979.  The code here is a port by John D Cook's C++ implementation
 ;; (http://www.johndcook.com/stand_alone_code.html )
+
+;; NOTE: this implementation calculates and stores a table of log(n!) on first invocation of L >= 36
+;; and therefore is not entirely thread safe (should still produce correct result, but with performance hit if table
+;; is recalculated multiple times)
 (define (make-poisson-generator L)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (if (< L 36)

@@ -132,6 +132,12 @@ homogeneous vectors.</p>
 </pre></td></tr></table>
 </dd></dl>
 
+<dt><a name="clamp"></a><code>(clamp-real-number</code><var> lower-bound upper-bound value</var><code>)</code></dt>
+<dd><p>Returns <var>value</var> clamped to be between
+<em>lower-bound</em> and <em>upper-bound</em> inclusive.
+Note that this procedure works with either exact or inexact numbers,
+but will produce strange results with a mixture of the two.
+</dd></dl>
 <dt><a name="index-reals_002dbetween_0024"></a><code>(make-random-real-generator</code><var> lower-bound upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact real numbers uniformly.
 (Note that this is not the same as returning all possible IEEE

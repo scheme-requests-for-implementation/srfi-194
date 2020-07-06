@@ -45,6 +45,19 @@
 (define (make-random-s64-generator) 
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
+;; private 
+;; TODO: import from somewhere?
+(define (clamp value lb ub)
+  (cond
+    ((< value lb) lb)
+    ((> value ub) ub)
+    (else value)))
+
+;; Extra clamp ensures fp errors won't cause out-of-range value.
+;; NB: We clamp instead of rejecting the out-of-range value---since such
+;; value can only be produced on the FP values on the edge, and we should
+;; regard it inappropriate rounding (for our purpose).  If we reject them,
+;; it will skew the distribution.
 (define (make-random-real-generator low-bound up-bound)
   (when (not (number? low-bound))
     (error "expected number"))
@@ -53,7 +66,9 @@
   (let ((rand-real-proc (random-source-make-reals (current-random-source)))
         (range (- up-bound low-bound)))
     (lambda ()
-      (+ low-bound (* range (rand-real-proc))))))
+      (clamp (+ low-bound (* range (rand-real-proc)))
+             low-bound 
+             up-bound))))
 
 (define (make-random-complex-generator real-lower-bound imag-lower-bound
                                        real-upper-bound imag-upper-bound)
@@ -117,7 +132,14 @@
            (it (+ sum (vector-ref pvec i))
                (+ i 1)))))))
 
-;; This generator uses Box-Muller method, and uses both returned values
+;; Normal distribution (continuous - generates real numbers)
+;; Box-Muller algorithm
+;; NB: We tested Ziggurat method, too,
+;; only to find out Box-Muller is faster about 12% - presumably
+;; the overhead of each ops is larger in Gauche than C/C++, and
+;; so the difference of cost of log or sin from the primitive
+;; addition/multiplication are negligible.
+
 ;; NOTE: this implementation is not thread safe
 (define make-normal-generator
   (case-lambda
@@ -165,7 +187,7 @@
        (make-poisson/small rand-real-proc L)
        (make-poisson/large rand-real-proc L))))
 
-;private
+;; private
 (define (make-poisson/small rand-real-proc L)
   (lambda ()
     (do ((exp-L (exp (- L)))
@@ -173,7 +195,7 @@
          (p 1.0 (* p (rand-real-proc))))
         ((<= p exp-L) (- k 1)))))
 
-;private
+;; private
 (define (make-poisson/large rand-real-proc L)
   (let* ((c (- 0.767 (/ 3.36 L)))
          (beta (/ PI (sqrt (* 3 L))))
@@ -195,14 +217,14 @@
                   (loop))))))
     loop))
 
-;private
-;log(n!) table for n 1 to 256. Vector, where nth index corresponds to log((n+1)!)
-;Computed on first invocation of `log-of-fact`
+;; private
+;; log(n!) table for n 1 to 256. Vector, where nth index corresponds to log((n+1)!)
+;; Computed on first invocation of `log-of-fact`
 (define log-fact-table #f)
 
-;private
-;computes log-fact-table
-;log(n!) = log((n-1)!) + log(n)
+;; private
+;; computes log-fact-table
+;; log(n!) = log((n-1)!) + log(n)
 (define (make-log-fact-table!)
   (define table (make-vector 256))
   (vector-set! table 0 0)
@@ -212,9 +234,9 @@
                               (log (+ i 1)))))
   (set! log-fact-table table))
 
-;private
-;returns log(n!)
-;adapted from https://www.johndcook.com/blog/2010/08/16/how-to-compute-log-factorial/
+;; private
+;; returns log(n!)
+;; adapted from https://www.johndcook.com/blog/2010/08/16/how-to-compute-log-factorial/
 (define (log-of-fact n)
   (when (not log-fact-table)
     (make-log-fact-table!))

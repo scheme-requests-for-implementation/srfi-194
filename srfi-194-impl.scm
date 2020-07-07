@@ -45,8 +45,9 @@
 (define (make-random-s64-generator) 
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
-;; private 
-;; TODO: import from somewhere?
+;; private
+;; the passed in lower and uper bound values are inclusive,
+;; calculated using exclusive bound and fladjacent
 (define (clamp value lb ub)
   (cond
     ((< value lb) lb)
@@ -64,11 +65,13 @@
   (when (not (number? up-bound))
     (error "expected number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source)))
-        (range (- up-bound low-bound)))
+        (range (- up-bound low-bound))
+        (up-bound/inclusive (fladjacent up-bound low-bound))
+        (low-bound/inclusive (fladjacent low-bound up-bound)))
     (lambda ()
       (clamp (+ low-bound (* range (rand-real-proc)))
-             low-bound 
-             up-bound))))
+             low-bound/inclusive
+             up-bound/inclusive))))
 
 (define (make-random-complex-generator real-lower-bound imag-lower-bound
                                        real-upper-bound imag-upper-bound)

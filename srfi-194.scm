@@ -3,7 +3,8 @@
           (scheme case-lambda)
           (scheme inexact)
           (scheme complex)
-          (srfi 133)
+          (srfi 144) ;; fladjacent
+          (srfi 133) ;; vector-fold
           (srfi 27))
 
   (cond-expand

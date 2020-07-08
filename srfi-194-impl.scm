@@ -45,33 +45,19 @@
 (define (make-random-s64-generator) 
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
-;; private
-;; the passed in lower and uper bound values are inclusive,
-;; calculated using exclusive bound and fladjacent
-(define (clamp value lb ub)
-  (cond
-    ((< value lb) lb)
-    ((> value ub) ub)
-    (else value)))
-
-;; Extra clamp ensures fp errors won't cause out-of-range value.
-;; NB: We clamp instead of rejecting the out-of-range value---since such
-;; value can only be produced on the FP values on the edge, and we should
-;; regard it inappropriate rounding (for our purpose).  If we reject them,
-;; it will skew the distribution.
 (define (make-random-real-generator low-bound up-bound)
   (when (not (number? low-bound))
     (error "expected number"))
   (when (not (number? up-bound))
     (error "expected number"))
-  (let ((rand-real-proc (random-source-make-reals (current-random-source)))
-        (range (- up-bound low-bound))
-        (up-bound/inclusive (fladjacent up-bound low-bound))
-        (low-bound/inclusive (fladjacent low-bound up-bound)))
+  (let ((rand-real-proc (random-source-make-reals (current-random-source))))
     (lambda ()
-      (clamp (+ low-bound (* range (rand-real-proc)))
-             low-bound/inclusive
-             up-bound/inclusive))))
+      (define t (rand-real-proc))
+      ;; alternative way of doing lowbound + t * (up-bound - low-bound)
+      ;; is susceptible to rounding errors and would require clamping to be safe
+      ;; (which in turn requires 144 for adjacent float function)
+      (+ (* t low-bound)
+         (* (- 1.0 t) up-bound)))))
 
 (define (make-random-complex-generator real-lower-bound imag-lower-bound
                                        real-upper-bound imag-upper-bound)

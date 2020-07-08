@@ -11,6 +11,9 @@
     ((library (srfi 121)) (import (srfi 121))))
 
   (export
+    
+    clamp-real-number
+    
     current-random-source
     with-random-source
     

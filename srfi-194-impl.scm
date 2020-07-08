@@ -45,6 +45,13 @@
 (define (make-random-s64-generator) 
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
+(define (clamp-real-number lower-bound upper-bound value)
+  (cond
+    ((> lower-bound upper-bound) (error "clamp lower bound cannot be bigger than upper bound"))
+    ((< value lower-bound) lower-bound)
+    ((> value upper-bound) upper-bound)
+    (else value)))
+
 (define (make-random-real-generator low-bound up-bound)
   (when (not (number? low-bound))
     (error "expected number"))

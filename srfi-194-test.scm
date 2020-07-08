@@ -61,6 +61,11 @@
 
 (test-begin "srfi-194")
 
+(test-group "Test clamp real number"
+            (test-equal 10.0 (clamp-real-number 5.0 10.0 11))
+            (test-equal 5.0 (clamp-real-number 5.0 10.0 2.0))
+            (test-equal 7.5 (clamp-real-number 5.0 10.0 7.5)))
+
 (test-group "Test with-random-source syntax"
             ;;create and consume generators that are made with different source
             ;;with various order, and check that order doesn't change the outcome

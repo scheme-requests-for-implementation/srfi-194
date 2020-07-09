@@ -3,7 +3,7 @@
           (scheme case-lambda)
           (scheme inexact)
           (scheme complex)
-          (srfi 133)
+          (srfi 133) ;; vector-fold
           (srfi 27))
 
   (cond-expand
@@ -11,6 +11,9 @@
     ((library (srfi 121)) (import (srfi 121))))
 
   (export
+    
+    clamp-real-number
+    
     current-random-source
     with-random-source
     

@@ -79,9 +79,6 @@
 )
 
 ; ------------------------------------------------------------
-; iota
-(define (generator->list f n)
-	(map (lambda (junk) (f)) (make-list n)))
 
 ; The public API
 ; Defaults should be n==int-max and q==1
@@ -97,8 +94,8 @@
 		(define u (dist))
 		(define x (big-h-inv u q))
 		(define flt-k (clamp (round x) 1 n))
-		; Convert to integer. This is guile-specific, I don't know
-		; generic scheme for this.
+		; Convert to integer. Needs either srfi-70 or the built-in
+		; equivalent.
 		(define k (inexact->exact (floor flt-k)))
 
 		(if (>= u (- (big-h (+ k 0.5) q) (hat k q))) k #f))

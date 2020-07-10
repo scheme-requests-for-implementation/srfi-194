@@ -35,7 +35,9 @@
     make-exponential-generator
     make-geometric-generator
     make-poisson-generator
+    make-zipf-generator
 
     gsampling)
 
-  (include "srfi-194-impl.scm"))
+  (include "srfi-194-impl.scm")
+  (include "zipf-impl.scm"))

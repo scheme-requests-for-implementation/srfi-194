@@ -28,21 +28,21 @@
 
 (define (make-random-u1-generator)
   (make-random-integer-generator 0 2))
-(define (make-random-u8-generator) 
+(define (make-random-u8-generator)
   (make-random-integer-generator 0 256))
-(define (make-random-s8-generator) 
+(define (make-random-s8-generator)
   (make-random-integer-generator -128 128))
-(define (make-random-u16-generator) 
+(define (make-random-u16-generator)
   (make-random-integer-generator 0 65536))
-(define (make-random-s16-generator) 
+(define (make-random-s16-generator)
   (make-random-integer-generator -32768 32768))
-(define (make-random-u32-generator) 
+(define (make-random-u32-generator)
   (make-random-integer-generator 0 (expt 2 32)))
-(define (make-random-s32-generator) 
+(define (make-random-s32-generator)
   (make-random-integer-generator (- (expt 2 31)) (expt 2 31)))
-(define (make-random-u64-generator) 
+(define (make-random-u64-generator)
   (make-random-integer-generator 0 (expt 2 64)))
-(define (make-random-s64-generator) 
+(define (make-random-s64-generator)
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
 (define (clamp-real-number lower-bound upper-bound value)
@@ -100,7 +100,7 @@
 (define (make-bernoulli-generator p)
   (when (or (< p 0) (> p 1))
     (error "expected 0 <= p <= 1"))
-  (let ((rand-real-proc (random-source-make-reals (current-random-source)))) 
+  (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (if (<= (rand-real-proc) p)
          0
@@ -108,7 +108,7 @@
 
 (define (make-categorical-generator pvec)
   (define prob-sum
-    (vector-fold 
+    (vector-fold
       (lambda (sum p)
         (unless (and (number? p)
                      (> p 0))

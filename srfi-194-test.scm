@@ -13,7 +13,7 @@
 ;; for testing custom rand source,
 ;; since it's implementation specific
 (cond-expand
-  (gauche (import 
+  (gauche (import
             (gauche base)
             (math mt-random))))
 
@@ -69,40 +69,40 @@
 (test-group "Test with-random-source syntax"
             ;;create and consume generators that are made with different source
             ;;with various order, and check that order doesn't change the outcome
-            (define (test-multiple-sources gen1-maker gen1-expect 
+            (define (test-multiple-sources gen1-maker gen1-expect
                                            gen2-maker gen2-expect)
-              
+
               ;;create gen1, consume gen1, create gen2, consume gen2
               (let ((gen1 (gen1-maker)))
                (test-equal (generator->list gen1) gen1-expect)
                (let ((gen2 (gen2-maker)))
                 (test-equal (generator->list gen2) gen2-expect)))
-              
+
               ;;create gen1, create gen2, consume gen1, consume gen2
               (let ((gen1 (gen1-maker))
                     (gen2 (gen2-maker)))
                 (test-equal (generator->list gen1) gen1-expect)
                 (test-equal (generator->list gen2) gen2-expect)))
-            
+
             (define multiple-sources-testcase
               (cond-expand
                 (gauche (list (lambda ()
                                 (gtake (with-random-source
                                        (make <mersenne-twister> :seed 0)
-                                       make-random-integer-generator 0 10) 
+                                       make-random-integer-generator 0 10)
                                      5))
                               '(5 5 7 8 6)
                               (lambda ()
                                 (gtake (with-random-source
                                        (make <mersenne-twister> :seed 1)
-                                       make-random-integer-generator 0 10) 
+                                       make-random-integer-generator 0 10)
                                      5))
                               '(4 9 7 9 0)))
                 (else #f)))
-            
+
             (when multiple-sources-testcase
               (apply test-multiple-sources multiple-sources-testcase))
-            
+
             (with-random-source default-random-source
                                 make-random-integer-generator 0 10))
 
@@ -126,7 +126,7 @@
                 (list make-random-s32-generator 32 #t)
                 (list make-random-u64-generator 64 #f)
                 (list make-random-s64-generator 64 #t)))
-            
+
             ;;test u1 separately, since it will fail quarter checks due to small range
             (assert-number-generator/all-in-range (make-random-u1-generator) 0 2)
             (test-assert
@@ -153,15 +153,15 @@
             (assert-number-generator
               (gmap
                 real-part
-                (make-random-complex-generator -10.0 -100.0 10.0 100.0)) 
+                (make-random-complex-generator -10.0 -100.0 10.0 100.0))
               -10 10)
-            
+
             (assert-number-generator
               (gmap
                 imag-part
-                (make-random-complex-generator -100.0 -10.0 100.0 10.0)) 
+                (make-random-complex-generator -100.0 -10.0 100.0 10.0))
               -10 10)
-            
+
             (test-assert
               (generator-any
                 (lambda (num)
@@ -251,7 +251,7 @@
               (lambda (result expect)
                 (define ratio (inexact (/ result expect)))
                 (test-assert (>  ratio 0.9))
-                (test-assert (< ratio 1.1))) 
+                (test-assert (< ratio 1.1)))
               result-vec
               expect-vec)
             (test-error (make-categorical-generator (vector 0.5))))

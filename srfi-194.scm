@@ -11,12 +11,12 @@
     ((library (srfi 121)) (import (srfi 121))))
 
   (export
-    
+
     clamp-real-number
-    
+
     current-random-source
     with-random-source
-    
+
     make-random-integer-generator
     make-random-u1-generator
     make-random-u8-generator make-random-s8-generator
@@ -29,7 +29,7 @@
     make-random-real-generator
     make-random-complex-generator
 
-    make-bernoulli-generator 
+    make-bernoulli-generator
     make-categorical-generator
     make-normal-generator
     make-exponential-generator

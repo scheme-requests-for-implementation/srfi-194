@@ -17,14 +17,14 @@
 ;;
 
 (define (make-random-integer-generator low-bound up-bound)
-     (when (not (integer? low-bound))
-       (error "expected integer"))
-     (when (not (integer? up-bound))
-       (error "expected integer"))
-     (let ((rand-int-proc (random-source-make-integers (current-random-source)))
-           (range (- up-bound low-bound)))
-       (lambda ()
-         (+ low-bound (rand-int-proc range)))))
+  (when (not (integer? low-bound))
+    (error "expected integer"))
+  (when (not (integer? up-bound))
+    (error "expected integer"))
+  (let ((rand-int-proc (random-source-make-integers (current-random-source)))
+        (range (- up-bound low-bound)))
+    (lambda ()
+      (+ low-bound (rand-int-proc range)))))
 
 (define (make-random-u1-generator)
   (make-random-integer-generator 0 2))
@@ -45,15 +45,33 @@
 (define (make-random-s64-generator) 
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
+(define (clamp-real-number lower-bound upper-bound value)
+  (cond
+    ((> lower-bound upper-bound) (error "clamp lower bound cannot be bigger than upper bound"))
+    ((< value lower-bound) lower-bound)
+    ((> value upper-bound) upper-bound)
+    (else value)))
+
 (define (make-random-real-generator low-bound up-bound)
   (when (not (number? low-bound))
     (error "expected number"))
   (when (not (number? up-bound))
     (error "expected number"))
-  (let ((rand-real-proc (random-source-make-reals (current-random-source)))
-        (range (- up-bound low-bound)))
+  (let ((rand-real-proc (random-source-make-reals (current-random-source))))
     (lambda ()
-      (+ low-bound (* range (rand-real-proc))))))
+      (define t (rand-real-proc))
+      ;; alternative way of doing lowbound + t * (up-bound - low-bound)
+      ;; is susceptible to rounding errors and would require clamping to be safe
+      ;; (which in turn requires 144 for adjacent float function)
+      (+ (* t low-bound)
+         (* (- 1.0 t) up-bound)))))
+
+(define (make-random-complex-generator real-lower-bound imag-lower-bound
+                                       real-upper-bound imag-upper-bound)
+  (let ((real-gen (make-random-real-generator real-lower-bound real-upper-bound))
+        (imag-gen (make-random-real-generator imag-lower-bound imag-upper-bound)))
+    (lambda ()
+      (make-rectangular (real-gen) (imag-gen)))))
 
 (define (make-random-boolean-generator)
   (define u1 (make-random-u1-generator))
@@ -88,6 +106,37 @@
          0
          1))))
 
+(define (make-categorical-generator pvec)
+  (define prob-sum
+    (vector-fold 
+      (lambda (sum p)
+        (unless (and (number? p)
+                     (> p 0))
+          (error "parameter must be a vector of positive numbers"))
+        (+ sum p))
+      0
+      pvec))
+  (unless (= prob-sum 1)
+    (error "sum of given probabilities must be equal to 1"))
+  (let ((real-gen (make-random-real-generator 0 1)))
+   (lambda ()
+     (define roll (real-gen))
+     (let it ((sum 0)
+              (i 0))
+       (if (< roll (+ sum (vector-ref pvec i)))
+           i
+           (it (+ sum (vector-ref pvec i))
+               (+ i 1)))))))
+
+;; Normal distribution (continuous - generates real numbers)
+;; Box-Muller algorithm
+;; NB: We tested Ziggurat method, too,
+;; only to find out Box-Muller is faster about 12% - presumably
+;; the overhead of each ops is larger in Gauche than C/C++, and
+;; so the difference of cost of log or sin from the primitive
+;; addition/multiplication are negligible.
+
+;; NOTE: this implementation is not thread safe
 (define make-normal-generator
   (case-lambda
     (()
@@ -95,12 +144,17 @@
     ((mean)
      (make-normal-generator mean 1.0))
     ((mean deviation)
-     (let ((rand-real-proc (random-source-make-reals (current-random-source))))
-      (lambda ()
-        ;;Box-Muller
-        (let ((r (sqrt (* -2 (log (rand-real-proc)))))
-              (theta (* 2 PI (rand-real-proc))))
-          (+ mean (* deviation r (sin theta)))))))))
+     (let ((rand-real-proc (random-source-make-reals (current-random-source)))
+           (state #f))
+       (lambda ()
+         (if state
+             (let ((result state))
+              (set! state #f)
+              result)
+             (let ((r (sqrt (* -2 (log (rand-real-proc)))))
+                   (theta (* 2 PI (rand-real-proc))))
+               (set! state (+ mean (* deviation r (cos theta))))
+               (+ mean (* deviation r (sin theta))))))))))
 
 (define (make-exponential-generator mean)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
@@ -113,13 +167,23 @@
     (lambda ()
       (ceiling (* c (log (rand-real-proc)))))))
 
+;; Draw from poisson distribution with mean L, variance L.
+;; For small L, we use Knuth's method.  For larger L, we use rejection
+;; method by Atkinson, The Computer Generation of Poisson Random Variables,
+;; J. of the Royal Statistical Society Series C (Applied Statistics), 28(1),
+;; pp29-35, 1979.  The code here is a port by John D Cook's C++ implementation
+;; (http://www.johndcook.com/stand_alone_code.html )
+
+;; NOTE: this implementation calculates and stores a table of log(n!) on first invocation of L >= 36
+;; and therefore is not entirely thread safe (should still produce correct result, but with performance hit if table
+;; is recalculated multiple times)
 (define (make-poisson-generator L)
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (if (< L 36)
        (make-poisson/small rand-real-proc L)
        (make-poisson/large rand-real-proc L))))
 
-;private
+;; private
 (define (make-poisson/small rand-real-proc L)
   (lambda ()
     (do ((exp-L (exp (- L)))
@@ -127,7 +191,7 @@
          (p 1.0 (* p (rand-real-proc))))
         ((<= p exp-L) (- k 1)))))
 
-;private
+;; private
 (define (make-poisson/large rand-real-proc L)
   (let* ((c (- 0.767 (/ 3.36 L)))
          (beta (/ PI (sqrt (* 3 L))))
@@ -149,26 +213,26 @@
                   (loop))))))
     loop))
 
-;private
-;log(n!) table for n 1 to 256. Vector, where nth index corresponds to log((n+1)!)
-;Computed on first invocation of `log-of-fact`
+;; private
+;; log(n!) table for n 1 to 256. Vector, where nth index corresponds to log((n+1)!)
+;; Computed on first invocation of `log-of-fact`
 (define log-fact-table #f)
 
-;private
-;computes log-fact-table
-;log(n!) = log((n-1)!) + log(n)
+;; private
+;; computes log-fact-table
+;; log(n!) = log((n-1)!) + log(n)
 (define (make-log-fact-table!)
-   (define table (make-vector 256))
-   (vector-set! table 0 0)
-   (do ((i 1 (+ i 1)))
-       ((> i 255) #t)
-       (vector-set! table i (+ (vector-ref table (- i 1))
-                               (log (+ i 1)))))
-   (set! log-fact-table table))
+  (define table (make-vector 256))
+  (vector-set! table 0 0)
+  (do ((i 1 (+ i 1)))
+      ((> i 255) #t)
+      (vector-set! table i (+ (vector-ref table (- i 1))
+                              (log (+ i 1)))))
+  (set! log-fact-table table))
 
-;private
-;returns log(n!)
-;adapted from https://www.johndcook.com/blog/2010/08/16/how-to-compute-log-factorial/
+;; private
+;; returns log(n!)
+;; adapted from https://www.johndcook.com/blog/2010/08/16/how-to-compute-log-factorial/
 (define (log-of-fact n)
   (when (not log-fact-table)
     (make-log-fact-table!))
@@ -189,101 +253,34 @@
   (let ((gen-vec (list->vector generators-lst))
         (rand-int-proc (random-source-make-integers (current-random-source))))
 
-       ;remove exhausted generator at index
-       (define (remove-gen index)
-         (define new-vec (make-vector (- (vector-length gen-vec) 1)))
-         ;when removing anything but first, copy all elements before index
-         (when (> index 0)
-           (vector-copy! new-vec 0 gen-vec 0 index))
-         ;when removing anything but last, copy all elements after index
-         (when (< index (- (vector-length gen-vec) 1))
-           (vector-copy! new-vec index gen-vec (+ 1 index)))
-         (set! gen-vec new-vec))
+    ;remove exhausted generator at index
+    (define (remove-gen index)
+      (define new-vec (make-vector (- (vector-length gen-vec) 1)))
+      ;when removing anything but first, copy all elements before index
+      (when (> index 0)
+        (vector-copy! new-vec 0 gen-vec 0 index))
+      ;when removing anything but last, copy all elements after index
+      (when (< index (- (vector-length gen-vec) 1))
+        (vector-copy! new-vec index gen-vec (+ 1 index)))
+      (set! gen-vec new-vec))
 
-       ;randomly pick generator. If it's exhausted remove it, and pick again
-       ;returns value (or eof, if all generators are exhausted)
-       (define (pick)
-         (let* ((index (rand-int-proc (vector-length gen-vec)))
-                (gen (vector-ref gen-vec index))
-                (value (gen)))
-           (if (eof-object? value)
-               (begin
-                 (remove-gen index)
-                 (if (= (vector-length gen-vec) 0)
-                     (eof-object)
-                     (pick)))
-               value)))
+    ;randomly pick generator. If it's exhausted remove it, and pick again
+    ;returns value (or eof, if all generators are exhausted)
+    (define (pick)
+      (let* ((index (rand-int-proc (vector-length gen-vec)))
+             (gen (vector-ref gen-vec index))
+             (value (gen)))
+        (if (eof-object? value)
+            (begin
+              (remove-gen index)
+              (if (= (vector-length gen-vec) 0)
+                  (eof-object)
+                  (pick)))
+            value)))
 
-       (lambda ()
-         (if (= 0 (vector-length gen-vec))
-             (eof-object)
-             (pick)))))
+    (lambda ()
+      (if (= 0 (vector-length gen-vec))
+          (eof-object)
+          (pick)))))
 
-(define (gweighted-sampling . args)
-  (gweighted-sampling* (group-weights-with-generators args)))
 
-;private
-;converts flat list of interweaving weights and generators
-;to a list of weight+generator pairs
-(define (group-weights-with-generators objs)
-  (let loop ((objs objs)
-             (pairs '()))
-    (cond
-      ((null? objs) (reverse pairs))
-      (else (begin
-             (when (null? (cdr objs))
-               (error "Uneven amount of arguments provided"))
-             (when (not (number? (car objs)))
-               (error "Expected number"))
-             (when (< (car objs) 0)
-               (error "Weight cannot be negative"))
-             (loop (cddr objs)
-                   (cons (cons (car objs) (cadr objs))
-                         pairs)))))))
-
-;private
-(define (gweighted-sampling* weight+generators-lst)
-  (let ((weight-sum (apply + (map car weight+generators-lst)))
-        (rand-real-proc (random-source-make-reals (current-random-source))))
-
-       ;randomly pick generator. If it's exhausted remove it, and pick again.
-       ;returns value (or eof, if all generators are exhausted)
-       (define (pick)
-         (let* ((roll (* (rand-real-proc) weight-sum))
-                (picked+rest-gens (pick-weighted-generator roll weight+generators-lst))
-                (picked-gen (car picked+rest-gens))
-                (value ((cdr picked-gen))))
-           (if (eof-object? value)
-               (begin
-                 (set! weight+generators-lst (cdr picked+rest-gens))
-                 (set! weight-sum (apply + (map car weight+generators-lst)))
-                 (if (null? weight+generators-lst)
-                     (eof-object)
-                     (pick)))
-               value)))
-
-       (lambda ()
-         (if (null? weight+generators-lst)
-             (eof-object)
-             (pick)))))
-
-;private
-;returns pair, where car is picked generator, and cdr is list of rest generators in preserved order
-(define (pick-weighted-generator roll weight+gen-lst)
-  (let loop ((sum 0)
-             (weight+gen-lst weight+gen-lst)
-             (picked-gen #f)
-             (rest-gen-rev '()))
-    (if (null? weight+gen-lst)
-        (cons picked-gen (reverse rest-gen-rev))
-        (let* ((w+g (car weight+gen-lst)))
-         (if (or picked-gen
-                 (< (+ sum (car w+g)) roll))
-             (loop (+ sum (car w+g))
-                   (cdr weight+gen-lst)
-                   picked-gen
-                   (cons w+g rest-gen-rev))
-             (loop (+ sum (car w+g))
-                   (cdr weight+gen-lst)
-                   w+g
-                   rest-gen-rev))))))

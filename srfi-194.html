@@ -132,12 +132,18 @@ homogeneous vectors.</p>
 </pre></td></tr></table>
 </dd></dl>
 
+<dt><a name="clamp"></a><code>(clamp-real-number</code><var> lower-bound upper-bound value</var><code>)</code></dt>
+<dd><p>Returns <var>value</var> clamped to be between
+<em>lower-bound</em> and <em>upper-bound</em> inclusive.
+Note that this procedure works with either exact or inexact numbers,
+but will produce strange results with a mixture of the two.
+</dd></dl>
 <dt><a name="index-reals_002dbetween_0024"></a><code>(make-random-real-generator</code><var> lower-bound upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact real numbers uniformly.
 (Note that this is not the same as returning all possible IEEE
 floats within the stated range uniformly.)
 The procedure returns reals between
-<var>lower-bound</var> and <var>upper-bound</var>, both exclusive.
+<var>lower-bound</var> and <var>upper-bound</var>, both inclusive.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 
@@ -153,9 +159,9 @@ The procedure returns reals between
 <dt><a name="index-complexs_002dbetween_0024"></a><code>(make-random-complex-generator</code><var> real-lower-bound imag-lower-bound real-upper-bound imag-upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact complex numbers uniformly.
 The procedure returns complex numbers whose real part is between
-<var>real-lower-bound</var> and <var>real-upper-bound</var>, both exclusive,
-and whose complex part is between
-<var>imag-lower-bound</var> and <var>imag-upper-bound</var>, both exclusive.
+<var>real-lower-bound</var> and <var>real-upper-bound</var>, both inclusive,
+and whose imaginary part is between
+<var>imag-lower-bound</var> and <var>imag-upper-bound</var>, both inclusive.
 </p>
 </dd></dl>
 <dl>

@@ -2,6 +2,8 @@
   (import (scheme base)
           (scheme case-lambda)
           (scheme inexact)
+          (scheme complex)
+          (srfi 133) ;; vector-fold
           (srfi 27))
 
   (cond-expand
@@ -9,6 +11,9 @@
     ((library (srfi 121)) (import (srfi 121))))
 
   (export
+    
+    clamp-real-number
+    
     current-random-source
     with-random-source
     
@@ -22,14 +27,15 @@
     make-random-char-generator
     make-random-string-generator
     make-random-real-generator
+    make-random-complex-generator
 
-    make-bernoulli-generator
+    make-bernoulli-generator 
+    make-categorical-generator
     make-normal-generator
     make-exponential-generator
     make-geometric-generator
     make-poisson-generator
 
-    gsampling
-    gweighted-sampling)
+    gsampling)
 
   (include "srfi-194-impl.scm"))

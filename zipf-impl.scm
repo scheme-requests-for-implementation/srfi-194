@@ -88,10 +88,8 @@
 (define (make-zipf-generator n q)
 	(define big-h-x1 (- 1 (big-h 1.5 q)))
 	(define big-h-n (big-h (+ n 0.5) q))
-	(define ivl (- big-h-n big-h-x1))
 
-	; random:uniform is a guile-specific uniform distribution over 0 to 1
-	(define (dist) (+ big-h-x1 (* ivl (random:uniform))))
+	(define (dist) (make-random-real-generator big-h-x1 big-h-n))
 
 	; Attempt to hit the dartboard. Return #f if we fail,
 	; otherwise return an integer between 1 and n.

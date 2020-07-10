@@ -95,7 +95,7 @@ some concrete data from the generators.
 </p>
 <dl>
 <dt><a name="index-integers_002dbetween_0024"></a><code>(make-random-integer-generator</code><var> lower-bound  upper-bound</var><code>)</code></dt>
-<dd><p>Create exact integer generators.  Creates a generator that generates integers between
+<dd><p>Creates exact integer generators.  Creates a generator that generates integers between
 <var>lower-bound</var> (inclusive) and <var>upper-bound</var> (exclusive) uniformly.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">;; A die roller
@@ -117,7 +117,7 @@ some concrete data from the generators.
 <dt><a name="index-uint32s"></a><code>(make-random-s32-generator</code><code>)</code></dt>
 <dt><a name="index-int64s"></a><code>(make-random-u64-generator</code><code>)</code></dt>
 <dt><a name="index-uint64s"></a><code>(make-random-s64-generator</code><code>)</code></dt>
-<dd><p>Return uniform integer generators that generate integers in the ranges of
+<dd><p>Returns uniform integer generators that generate integers in the ranges of
 1-bit unsigned and
 8, 16, 32, and 64-bit signed and unsigned integers.
 These values can be stored in the corresponding
@@ -130,7 +130,7 @@ homogeneous vectors.</p>
 
 <dt><a name="clamp"></a><code>(clamp-real-number</code><var> lower-bound upper-bound value</var><code>)</code></dt>
 <dd><p>Returns <var>value</var> clamped to be between
-<em>lower-bound</em> and <em>upper-bound</em> inclusive.
+<em>lower-bound</em> and <em>upper-bound</em>, inclusive.
 Note that this procedure works with either exact or inexact numbers,
 but will produce strange results with a mixture of the two.
 </dd></dl>

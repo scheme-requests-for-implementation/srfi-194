@@ -89,7 +89,7 @@
 	(define big-h-x1 (- 1 (big-h 1.5 q)))
 	(define big-h-n (big-h (+ n 0.5) q))
 
-	(define (dist) (make-random-real-generator big-h-x1 big-h-n))
+	(define dist (make-random-real-generator big-h-x1 big-h-n))
 
 	; Attempt to hit the dartboard. Return #f if we fail,
 	; otherwise return an integer between 1 and n.

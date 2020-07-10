@@ -30,9 +30,14 @@
 ; Public API at bottom.
 
 ; Epsilon to avoid convergence issues with divide-by-zero.
-; This is to avoid explosions due to scheme not having many
-; common elementary functions (that I know of, at any rate).
-(define epsilon 1.0e-8)
+; This is to avoid explosions due to scheme not having a library
+; for common elementary functions. The value here is chosen to
+; provide 16 decimal places of precision for the two functions
+; immediately below. Note that epsilon^4/24 = 1e-17 so this should
+; be plenty. Note that the default implementation for the logarithm
+; (in guile, at least) appears to loose accuracy even before this
+; point (this is surprising!).
+(define epsilon 1.0e-4)
 
 ; (exp(x) - 1) / x 
 ; This partly works around the issue of scheme not having a native

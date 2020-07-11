@@ -3,7 +3,17 @@
 ;
 ; Created by Linas Vepstas 24 June 2020
 ; Nominated for inclusion in srfi-194
-; Not yet unit-tested, may be buggy!
+;
+; Not optimized for speed!
+;
+; XXXXXXXXXXXXXX Attention!
+; Preliminary unit testing indicates that .. there are fundamental
+; implementation bugs in this code/algorithm. It fails badly for
+; n=30 and q=2, and the root cause for the failure is the clamping
+; in big-h-inv that attempts to avoid logs of negative numbers.
+;
+; The distributions that this generates are ... mostly insane.
+; This is easily verified just by graphing for a variety of values.
 ;
 ; Implementation taken from drobilla's May 24, 2017 answer to
 ; https://stackoverflow.com/questions/9983239/how-to-generate-zipf-distributed-numbers-efficiently
@@ -75,6 +85,7 @@
 ; The inverse function of H(x)
 (define (big-h-inv x q)
 	(define t (max -1 (* x (- 1 q))))
+(if (> -1 (* x (- 1 q))) (format #t "Oh No!!! Failure! x=~A q=~A p=~A t=~A\n" x q (* x (- 1 q)) t))
 	(exp (* x (log1pxbx t)))
 )
 

@@ -3,7 +3,13 @@
 ;
 ; Created by Linas Vepstas 10 July 2020
 ; Nominated for inclusion in srfi-194
-; Not yet unit-tested, may be buggy!
+;
+; Not optimized for speed!
+;
+; XXXXXXXXXXXXXX Attention!
+; Preliminary unit testing indicates that .. something is wrong.
+; The distributions that this generates have too-heavy a tail,
+; this is easily verified just by graphing for a variety of values.
 ;
 ; Implementation from ZRI algorithm presented in the paper:
 ; "Rejection-inversion to generate variates from monotone discrete
@@ -19,7 +25,7 @@
 ; Begin with private functions, not to be exported.
 ; Public API at bottom.
 
-; The Hurwicz zeta offfset, called "v" in the original paper.
+; The Hurwicz zeta offset, called "v" in the original paper.
 ; Can be any value greater than zero.
 (define vee 1)
 
@@ -60,7 +66,8 @@
 	(define (try)
 		(define u (dist))
 		(define x (big-h-inv u q))
-		(define k (floor (+ x 0.5)))
+		(define kflt (floor (+ x 0.5)))
+		(define k (inexact->exact kflt))
 		(if (or
 			(<= (- k x) cut)
 			(>= u (- (big-h (+ k 0.5) q) (hat k q)))) k #f))

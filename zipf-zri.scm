@@ -18,7 +18,7 @@
 ;
 ; ------------------------------------------------------------
 
-; The Hurwicz zeta distribution 1 / (k+q)^s) for 1 <= k <= n integer
+; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
 ; The exponent `s` must be a real number not equal to 1.
 ;
@@ -28,7 +28,7 @@
 ;
 (define (make-zipf-generator/zri n s q)
 
-	; The hat function h(x) = 1 / (x+q) ^ s)
+	; The hat function h(x) = 1 / (x+q)^s
 	(define (hat x s)
 		(expt (+ x q) (- s)))
 
@@ -43,8 +43,7 @@
 	(define (big-h-inv x s)
 		(define 1ms (- 1 s))
 		(define oms (/ 1 1ms))
-		(- (expt (* x 1ms) oms) q)
-	)
+		(- (expt (* x 1ms) oms) q))
 
 	; Lower and upper bounds for the uniform random generator.
 	; Note that both are negative for all values of s.
@@ -67,6 +66,55 @@
 		(if (or
 			(<= (- k x) cut)
 			(>= u (- (big-h (+ k 0.5) s) (hat k s)))) k #f))
+
+	; Did we hit the dartboard? If not, try again.
+	(define (loop-until)
+		(define k (try))
+		(if k k (loop-until)))
+
+	; Return the generator.
+	loop-until
+)
+
+; The Hurwicz zeta distribution 1 / (k+q) for 1 <= k <= n integer
+; The Zipf distribution is recovered by setting q=0.
+; This handles the special case of s==1
+(define (make-zipf-generator/one n ignore q)
+
+	; The hat function h(x) = 1 / (x+q)
+	(define (hat x)
+		(/ 1 (+ x q)))
+
+	; The integral of hat(x)
+	; H(x) = log (x+q)
+	(define (big-h x)
+		(log (+ q x)))
+
+	; The inverse function of H(x)
+	(define (big-h-inv x)
+		(- (exp x) q))
+
+	; Lower and upper bounds for the uniform random generator.
+	; Note that both are negative for all values of s.
+	(define big-h-half (big-h 0.5))
+	(define big-h-n (big-h (+ n 0.5)))
+
+	; Rejection cut
+	(define cut (- 1 (big-h-inv (- (big-h 1.5) (/ 1 (+ 1 q))))))
+
+	; Uniform distribution
+	(define dist (make-random-real-generator big-h-half big-h-n))
+
+	; Attempt to hit the dartboard. Return #f if we fail,
+	; otherwise return an integer between 1 and n.
+	(define (try)
+		(define u (dist))
+		(define x (big-h-inv u))
+		(define kflt (floor (+ x 0.5)))
+		(define k (inexact->exact kflt))
+		(if (or
+			(<= (- k x) cut)
+			(>= u (- (big-h (+ k 0.5)) (hat k)))) k #f))
 
 	; Did we hit the dartboard? If not, try again.
 	(define (loop-until)

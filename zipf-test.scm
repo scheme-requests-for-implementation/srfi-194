@@ -70,18 +70,62 @@
 	; Test for uniform convergence.
 	(test-assert (<= l0-norm TOL))
 
-(format #t "its ~A ~A\n" l0-norm TOL)
+	(format #t "N=~D s=~9,6f q=~9,6f SAMP=~D norm=~9,6f tol=~9,6f ~A\n"
+		NVOCAB ESS QUE REPS l0-norm TOL (if (<= l0-norm TOL) "PASS" "FAIL"))
 
-	; Utility prints
-	(vector-to-file probility "foo.dat")
-	(vector-to-file prexpect "bar.dat")
-	(vector-to-file diff "baz.dat")
+	; Utility debug printing
+	;(vector-to-file probility "foo.dat")
+	;(vector-to-file prexpect "bar.dat")
+	;(vector-to-file diff "baz.dat")
 
 	#f
 )
 
 (test-begin "srfi-194-zipf")
-(test-group "Test zipf/zri 30 1.1 0"
-	(test-zipf make-zipf-generator/zri 30 1.1 0 1000 2e-2)
-)
+(test-zipf make-zipf-generator/zri 30 1.1     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 30 1.01    0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 30 1.001   0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 30 1.0001  0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 30 1.00001 0 1000 4e-2)
+
+(test-zipf make-zipf-generator/zri 300 1.1     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 300 1.01    0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 300 1.001   0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 300 1.0001  0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 300 1.00001 0 1000 4e-2)
+
+(test-zipf make-zipf-generator/zri 3701 1.1     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 3701 1.01    0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 3701 1.001   0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 3701 1.0001  0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 3701 1.00001 0 1000 4e-2)
+
+(test-zipf make-zipf-generator/zri 43701 (+ 1 1e-6)  0 1000 2e-2)
+(test-zipf make-zipf-generator/zri 43701 (+ 1 1e-7)  0 1000 2e-2)
+(test-zipf make-zipf-generator/zri 43701 (+ 1 1e-9)  0 1000 2e-2)
+(test-zipf make-zipf-generator/zri 43701 (+ 1 1e-12) 0 1000 2e-2)
+
+(test-zipf make-zipf-generator/zri 5 1.1     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 5 2.01    0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 5 4.731   0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 5 9.09001 0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 5 13.45   0 1000 4e-2)
+
+(test-zipf make-zipf-generator/zri 130 1.5     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 130 2.03    0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 130 4.5     0 1000 4e-2)
+(test-zipf make-zipf-generator/zri 130 6.66    0 1000 4e-2)
+
+(test-zipf make-zipf-generator/zri 129 1.1     0 10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 129 1.01    0 10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 129 1.001   0 10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 129 1.0001  0 10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 129 1.00001 0 10000 9.5e-3)
+
+(test-zipf make-zipf-generator/zri 131 1.1     0.3    10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 131 1.1     1.3    10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 131 1.1     6.3    10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 131 1.1     20.23  10000 9.5e-3)
+(test-zipf make-zipf-generator/zri 131 1.1     41.483 10000 9.5e-3)
+
 (test-end "srfi-194-zipf")

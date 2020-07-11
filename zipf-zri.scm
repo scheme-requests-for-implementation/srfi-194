@@ -36,8 +36,9 @@
 (define (make-zipf-generator/zri n q)
 
 	; The Hurwicz zeta offset, called "v" in the original paper.
-	; Can be any value greater than zero.
-	(define vee 1)
+	; Can be any non-negative value. "v" = zero gives the canonical
+	; Zipf distribution.
+	(define vee 0)
 
 	; The hat function h(x) = 1 / (x+v) ^ q)
 	(define (hat x q)

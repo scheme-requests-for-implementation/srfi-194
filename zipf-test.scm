@@ -4,13 +4,13 @@
 
 
 ; Debug wrapper
-;(define (xmake-zipf-generator n q)
-;	(define foo (make-zipf-generator (+ n 1) q))
-;	(lambda () (- (foo) 1)))
-
-(define (xmake-zipf-generator n q)
-	(define foo (make-zipf-generator/zri n q))
+(define (xmake-zipf-generator n s)
+	(define foo (make-zipf-generator n s))
 	(lambda () (foo)))
+
+;(define (xmake-zipf-generator n s)
+;	(define foo (make-zipf-generator/zri n s))
+;	(lambda () (foo)))
 
 ; Debug utility for gnuplot
 (define (vector-to-file vec filename)

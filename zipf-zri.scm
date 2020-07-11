@@ -20,7 +20,7 @@
 
 ; The Hurwicz zeta distribution 1 / (k+q)^s) for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
-; The exponent `s` must be a real number greater than 1.
+; The exponent `s` must be a real number not equal to 1.
 ;
 ; Example usage:
 ;    (define zgen (make-zipf-generator 50 1.01 0))

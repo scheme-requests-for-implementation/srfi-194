@@ -20,7 +20,10 @@
 
 ; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
+;
 ; The exponent `s` must be a real number not equal to 1.
+; Accuracy is diminished for |1-s|< 1e-6. The accuracy is roughly
+; equal to 1e-15 / |1-s| where 1e-15 == 64-bit double-precision ULP.
 ;
 ; Example usage:
 ;    (define zgen (make-zipf-generator 50 1.01 0))
@@ -76,23 +79,35 @@
 	loop-until
 )
 
-; The Hurwicz zeta distribution 1 / (k+q) for 1 <= k <= n integer
+; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
-; This handles the special case of s==1
-(define (make-zipf-generator/one n ignore q)
+;
+; The exponent `s` must be a real number close to 1.
+; Accuracy is diminished for |1-s|> 2e-4. The accuracy is roughly
+; equal to 0.05 * |1-s|^4 due to exp(1-s) being expanded to 4 terms.
+;
+; This handles the special case of s==1 perfectly.
+(define (make-zipf-generator/one n s q)
 
-	; The hat function h(x) = 1 / (x+q)
+	; The hat function h(x) = 1 / (x+q)^s
+	; Written for s->1 i.e. 1/(x+q)(x+q)^{s-1}
 	(define (hat x)
-		(/ 1 (+ x q)))
+		(define xpq (+ x q))
+		(/ (expt xpq (- 1 s)) xpq))
+
+	; Expansion of exp(1-s)/(1-s) for s->1
+	(define 1ms (- 1 s))
+	(define (trm n u) (+ 1 (/ (* 1ms u) n)))
+	(define exn (trm 2 (trm 3 (trm 4 1))))
 
 	; The integral of hat(x)
 	; H(x) = log (x+q)
 	(define (big-h x)
-		(log (+ q x)))
+		(* (log (+ q x)) exn))
 
 	; The inverse function of H(x)
 	(define (big-h-inv x)
-		(- (exp x) q))
+		(- (exp (/ x exn)) q))
 
 	; Lower and upper bounds for the uniform random generator.
 	; Note that both are negative for all values of s.

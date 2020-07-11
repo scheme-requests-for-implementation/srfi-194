@@ -88,7 +88,7 @@
 ; The public API
 ; Defaults should be n==int-max and q==1
 (define (make-zipf-generator n q)
-	(define big-h-x1 (- 1 (big-h 1.5 q)))
+	(define big-h-x1 (- (big-h 1.5 q) 1 ))
 	(define big-h-n (big-h (+ n 0.5) q))
 
 	(define dist (make-random-real-generator big-h-x1 big-h-n))

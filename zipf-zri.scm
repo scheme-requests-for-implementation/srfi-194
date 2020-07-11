@@ -1,4 +1,5 @@
 ;
+; zipf-zri.scm
 ; Create a Zipf random distribution.
 ;
 ; Created by Linas Vepstas 10 July 2020
@@ -24,10 +25,6 @@
 ; The exponent `s` must be a real number not equal to 1.
 ; Accuracy is diminished for |1-s|< 1e-6. The accuracy is roughly
 ; equal to 1e-15 / |1-s| where 1e-15 == 64-bit double-precision ULP.
-;
-; Example usage:
-;    (define zgen (make-zipf-generator 50 1.01 0))
-;    (generator->list zgen 10)
 ;
 (define (make-zipf-generator/zri n s q)
 
@@ -90,8 +87,10 @@
 ; equal to 0.05 * |1-s|^4 due to exp(1-s) being expanded to 4 terms.
 ;
 ; This handles the special case of s==1 perfectly.
-(define (make-zipf-generator/one n s q)
+(define (make-zipf-generator/one n es q)
 
+	; Hmm, exact s==1 for large n seems to hang!
+	(define s (exact->inexact es))
 	(define 1ms (- 1 s))
 
 	; The hat function h(x) = 1 / (x+q)^s
@@ -164,6 +163,25 @@
 
 	; Return the generator.
 	loop-until
+)
+
+;------------------------------------------------------------------
+;
+; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
+; The Zipf distribution is recovered by setting q=0.
+;
+; Valid for real -10 < s < 100 (otherwise overflows likely)
+; Valid for real -0.5 < q < 2e8 (otherwise overflows likely)
+; Valid for integer 1 <= k < int-max
+;
+; Example usage:
+;    (define zgen (make-zipf-generator 50 1.01 0))
+;    (generator->list zgen 10)
+;
+(define (make-zipf-generator n s q)
+	(if (< 1e-5 (abs (- 1 s)))
+		(make-zipf-generator/zri n s q)
+		(make-zipf-generator/one n s q))
 )
 
 *unspecified*

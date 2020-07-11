@@ -151,11 +151,11 @@
 (test-zipf make-zipf-generator 43701 1           0 1000 2.5e-2)
 
 ; Large s, small range
-(test-zipf make-zipf-generator 5 1.1     0 1000 4e-2)
-(test-zipf make-zipf-generator 5 2.01    0 1000 4e-2)
-(test-zipf make-zipf-generator 5 4.731   0 1000 4e-2)
-(test-zipf make-zipf-generator 5 9.09001 0 1000 4e-2)
-(test-zipf make-zipf-generator 5 13.45   0 1000 4e-2)
+(test-zipf make-zipf-generator 5 1.1     0 1000 5e-2)
+(test-zipf make-zipf-generator 5 2.01    0 1000 5e-2)
+(test-zipf make-zipf-generator 5 4.731   0 1000 5e-2)
+(test-zipf make-zipf-generator 5 9.09001 0 1000 5e-2)
+(test-zipf make-zipf-generator 5 13.45   0 1000 5e-2)
 
 ; Large s, larger range
 (test-zipf make-zipf-generator 130 1.5     0 1000 4e-2)
@@ -177,19 +177,19 @@
 (test-zipf make-zipf-generator 131 1.1     20.23  10000 9.5e-3)
 
 ; A walk into a stranger corner of the parameter space.
-(test-zipf make-zipf-generator 131 1.1     41.483 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 2.1     41.483 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 6.1     41.483 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 16.1    41.483 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 46.1    41.483 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 96.1    41.483 10000 9.5e-3)
+(test-zipf make-zipf-generator 131 1.1     41.483 10000 10.5e-3)
+(test-zipf make-zipf-generator 131 2.1     41.483 10000 10.5e-3)
+(test-zipf make-zipf-generator 131 6.1     41.483 10000 10.5e-3)
+(test-zipf make-zipf-generator 131 16.1    41.483 10000 10.5e-3)
+(test-zipf make-zipf-generator 131 46.1    41.483 10000 10.5e-3)
+(test-zipf make-zipf-generator 131 96.1    41.483 10000 10.5e-3)
 
 ; A still wilder corner of the parameter space.
-(test-zipf make-zipf-generator 131 1.1     1841.4 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 1.1     1.75e6 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 2.1     1.75e6 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 12.1    1.75e6 10000 9.5e-3)
-(test-zipf make-zipf-generator 131 42.1    1.75e6 10000 9.5e-3)
+(test-zipf make-zipf-generator 131 1.1     1841.4 10000 9.9e-3)
+(test-zipf make-zipf-generator 131 1.1     1.75e6 10000 9.9e-3)
+(test-zipf make-zipf-generator 131 2.1     1.75e6 10000 9.9e-3)
+(test-zipf make-zipf-generator 131 12.1    1.75e6 10000 9.9e-3)
+(test-zipf make-zipf-generator 131 42.1    1.75e6 10000 9.9e-3)
 
 ; Lets try s less than 1
 (test-zipf make-zipf-generator 35 0.9     0 1000 4e-2)
@@ -199,10 +199,10 @@
 (test-zipf make-zipf-generator 35 0.99999 0 1000 4e-2)
 
 ; Attempt to force an overflow
-(test-zipf make-zipf-generator 437 (- 1 1e-6)  0 1000 2e-2)
-(test-zipf make-zipf-generator 437 (- 1 1e-7)  0 1000 2e-2)
-(test-zipf make-zipf-generator 437 (- 1 1e-9)  0 1000 2e-2)
-(test-zipf make-zipf-generator 437 (- 1 1e-12) 0 1000 2e-2)
+(test-zipf make-zipf-generator 437 (- 1 1e-6)  0 1000 3e-2)
+(test-zipf make-zipf-generator 437 (- 1 1e-7)  0 1000 3e-2)
+(test-zipf make-zipf-generator 437 (- 1 1e-9)  0 1000 3e-2)
+(test-zipf make-zipf-generator 437 (- 1 1e-12) 0 1000 3e-2)
 
 ; Almost flat distribution
 (test-zipf make-zipf-generator 36 0.8     0 1000 4e-2)

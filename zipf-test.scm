@@ -62,7 +62,8 @@
 		(vector-unfold (lambda (i x) (values x (+ x 1))) NVOCAB 1))
 
 	; Sequence  1/(k+QUE)^ESS
-	(define inv-pow (vector-map (lambda (i k) (expt (+ k QUE) (- ESS))) seq))
+	(define inv-pow (vector-map
+		(lambda (i k) (expt (+ k QUE) (- (exact->inexact ESS)))) seq))
 
 	; Hurwicz harmonic number sum_1..NVOCAB 1/(k+QUE)^ESS
 	(define hnorm
@@ -105,7 +106,9 @@
 ; once out of every dozen(?) or two(?) invocations.  The failures are
 ; random but infrequent, exactly how they should be!
 ;
-(test-begin "srfi-194-zipf")
+(define (zipf-test-group)
+
+; (test-begin "srfi-194-zipf")
 
 ; Zoom into s->1
 (test-zipf make-zipf-generator 30 1.1     0 1000 4e-2)
@@ -218,4 +221,6 @@
 (test-zipf make-zipf-generator 16 -1.3    10  1000 4e-2)
 (test-zipf make-zipf-generator 16 -2.9    100 1000 4e-2)
 
-(test-end "srfi-194-zipf")
+; (test-end "srfi-194-zipf")
+)
+*unspecified*

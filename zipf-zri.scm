@@ -87,10 +87,8 @@
 ; equal to 0.05 * |1-s|^4 due to exp(1-s) being expanded to 4 terms.
 ;
 ; This handles the special case of s==1 perfectly.
-(define (make-zipf-generator/one n es q)
+(define (make-zipf-generator/one n s q)
 
-	; Hmm, exact s==1 for large n seems to hang!
-	(define s (exact->inexact es))
 	(define 1ms (- 1 s))
 
 	; The hat function h(x) = 1 / (x+q)^s

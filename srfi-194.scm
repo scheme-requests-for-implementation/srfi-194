@@ -40,4 +40,4 @@
     gsampling)
 
   (include "srfi-194-impl.scm")
-  (include "zipf-impl.scm"))
+  (include "zipf-zri.scm"))

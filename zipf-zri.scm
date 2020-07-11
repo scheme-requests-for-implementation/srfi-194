@@ -13,11 +13,11 @@
 ;
 ; Hörmann and Derflinger use "q" everywhere, when they really mean "s".
 ; Thier "q" is not the standard q-series deformation. Its just "s".
-; The notation in the code below has been changed to reflect
+; The notation in the code below differs from the article to reflect
 ; conventional usage.
 ;
-; ------------------------------------------------------------
-
+;------------------------------------------------------------------
+;
 ; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
 ;
@@ -32,29 +32,30 @@
 (define (make-zipf-generator/zri n s q)
 
 	; The hat function h(x) = 1 / (x+q)^s
-	(define (hat x s)
+	(define (hat x)
 		(expt (+ x q) (- s)))
 
 	; The integral of hat(x)
 	; H(x) = (x+q)^{1-s} / (1-s)
 	; Note that H(x) is always negative.
-	(define (big-h x s)
+	(define (big-h x)
 		(define 1ms (- 1 s))
 		(/ (expt (+ q x) 1ms) 1ms))
 
 	; The inverse function of H(x)
-	(define (big-h-inv x s)
+	; H^{-1}(y) = -q + (y(1-s))^{1/(1-s)}
+	(define (big-h-inv y)
 		(define 1ms (- 1 s))
 		(define oms (/ 1 1ms))
-		(- (expt (* x 1ms) oms) q))
+		(- (expt (* y 1ms) oms) q))
 
 	; Lower and upper bounds for the uniform random generator.
 	; Note that both are negative for all values of s.
-	(define big-h-half (big-h 0.5 s))
-	(define big-h-n (big-h (+ n 0.5) s))
+	(define big-h-half (big-h 0.5))
+	(define big-h-n (big-h (+ n 0.5)))
 
 	; Rejection cut
-	(define cut (- 1 (big-h-inv (- (big-h 1.5 s) (expt (+ 1 q) (- s))) s)))
+	(define cut (- 1 (big-h-inv (- (big-h 1.5) (expt (+ 1 q) (- s))))))
 
 	; Uniform distribution
 	(define dist (make-random-real-generator big-h-half big-h-n))
@@ -63,12 +64,12 @@
 	; otherwise return an integer between 1 and n.
 	(define (try)
 		(define u (dist))
-		(define x (big-h-inv u s))
+		(define x (big-h-inv u))
 		(define kflt (floor (+ x 0.5)))
 		(define k (inexact->exact kflt))
 		(if (or
 			(<= (- k x) cut)
-			(>= u (- (big-h (+ k 0.5) s) (hat k s)))) k #f))
+			(>= u (- (big-h (+ k 0.5)) (hat k)))) k #f))
 
 	; Did we hit the dartboard? If not, try again.
 	(define (loop-until)
@@ -79,6 +80,8 @@
 	loop-until
 )
 
+;------------------------------------------------------------------
+;
 ; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
 ;
@@ -89,25 +92,48 @@
 ; This handles the special case of s==1 perfectly.
 (define (make-zipf-generator/one n s q)
 
+	(define 1ms (- 1 s))
+
 	; The hat function h(x) = 1 / (x+q)^s
 	; Written for s->1 i.e. 1/(x+q)(x+q)^{s-1}
 	(define (hat x)
 		(define xpq (+ x q))
-		(/ (expt xpq (- 1 s)) xpq))
+		(/ (expt xpq 1ms) xpq))
 
-	; Expansion of exp(1-s)/(1-s) for s->1
-	(define 1ms (- 1 s))
-	(define (trm n u) (+ 1 (/ (* 1ms u) n)))
-	(define exn (trm 2 (trm 3 (trm 4 1))))
+	; Expansion of exn(y) = [exp(y(1-s))-1]/(1-s) for s->1
+	; Expanded to 4th order.
+	; Should equal this:
+	;;; (define (exn lg) (/ (- (exp (* 1ms lg)) 1) 1ms))
+	; but more accurate for s near 1.0
+	(define (exn lg)
+		(define (trm n u lg) (* lg (+ 1 (/ (* 1ms u) n))))
+		(trm 2 (trm 3 (trm 4 1 lg) lg) lg))
 
-	; The integral of hat(x)
-	; H(x) = log (x+q)
+	; Expansion of lg(y) = [log(1 + y(1-s))] / (1-s) for s->1
+	; Expanded to 4th order.
+	; Should equal this:
+	;;; (define (lg y) (/ (log (+ 1 (* y 1ms))) 1ms))
+	; but more accurate for s near 1.0
+	(define (lg y)
+		(define yms (* y 1ms))
+		(define (trm n u r) (- (/ 1 n) (* u r)))
+		(* y (trm 1 yms (trm 2 yms (trm 3 yms (trm 4 yms 0))))))
+
+	; The integral of hat(x) defined at s==1
+	; H(x) = [exp{(1-s) log(x+q)} - 1]/(1-s)
+	; Should equal this:
+	;;;  (define (big-h x) (/ (- (exp (* 1ms (log (+ q x)))) 1)  1ms))
+	; but expanded so that it's more accurate for s near 1.0
 	(define (big-h x)
-		(* (log (+ q x)) exn))
+		(exn (log (+ q x))))
 
 	; The inverse function of H(x)
-	(define (big-h-inv x)
-		(- (exp (/ x exn)) q))
+	; H^{-1}(y) = -q + (1 + y(1-s))^{1/(1-s)}
+	; Should equal this:
+	;;; (define (big-h-inv y) (- (expt (+ 1 (* y 1ms)) (/ 1 1ms)) q ))
+	; but expanded so that it's more accurate for s near 1.0
+	(define (big-h-inv y)
+		(- (exp (lg y)) q))
 
 	; Lower and upper bounds for the uniform random generator.
 	; Note that both are negative for all values of s.

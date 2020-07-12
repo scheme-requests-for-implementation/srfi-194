@@ -1,10 +1,15 @@
+;; NOTE: for zipf tests data can be exported, this can be enabled by uncommenting appropriate lines. 
+
 (import
   (srfi-194)
   (scheme base)
   (scheme inexact)
   (scheme complex)
   (scheme cxr)
-  (srfi 27))
+  (scheme file)
+  (scheme write)
+  (srfi 27)
+  (srfi 133))
 
 (cond-expand
   ((library (srfi 158)) (import (srfi 158)))
@@ -377,6 +382,8 @@
                 (gsampling (circular-generator 1) (circular-generator 2)))))
 
 ; See zipf-test.scm
-(test-group "Test Zipf sampling" (zipf-test-group))
+(test-group "Test Zipf sampling"
+            (include "zipf-test.scm")
+            (zipf-test-group))
 
 (test-end "srfi-194")

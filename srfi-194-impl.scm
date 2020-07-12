@@ -58,13 +58,13 @@
   (when (not (number? up-bound))
     (error "expected number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
-    (lambda ()
-      (define t (rand-real-proc))
-      ;; alternative way of doing lowbound + t * (up-bound - low-bound)
-      ;; is susceptible to rounding errors and would require clamping to be safe
-      ;; (which in turn requires 144 for adjacent float function)
-      (+ (* t low-bound)
-         (* (- 1.0 t) up-bound)))))
+   (lambda ()
+     (define t (rand-real-proc))
+     ;; alternative way of doing lowbound + t * (up-bound - low-bound)
+     ;; is susceptible to rounding errors and would require clamping to be safe
+     ;; (which in turn requires 144 for adjacent float function)
+     (+ (* t low-bound)
+        (* (- 1.0 t) up-bound)))))
 
 (define (make-random-complex-generator real-lower-bound imag-lower-bound
                                        real-upper-bound imag-upper-bound)

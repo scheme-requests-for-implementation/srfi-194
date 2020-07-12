@@ -10,7 +10,7 @@
 ; You can use this to dump a vector to a tab-delimited file.
 (define (vector-to-file vec filename)
   (define (write-vec)
-    (generator-for-each
+    (for-each
       (lambda (i) 
         (define index (+ i 1))
         (define val (vector-ref vec i))
@@ -18,7 +18,7 @@
         (display "  ")
         (display val)
         (newline))
-      (make-iota-generator (vector-length vec))))
+      (iota (vector-length vec))))
   (with-output-to-file filename write-vec))
 
 ; ------------------------------------------------------------------
@@ -57,7 +57,7 @@
 
   ; Sequence 1..NVOCAB
   (define seq
-    (generator->vector (make-iota-generator NVOCAB 1)))
+    (list->vector (iota NVOCAB 1)))
 
   ; Sequence  1/(k+QUE)^ESS
   (define inv-pow (vector-map
@@ -98,9 +98,9 @@
     (<= l0-norm TOL))
 
   ; Utility debug printing
-  (vector-to-file probility "probility.dat")
-  (vector-to-file prexpect "prexpect.dat")
-  (vector-to-file diff "diff.dat")
+  ;(vector-to-file probility "probility.dat")
+  ;(vector-to-file prexpect "prexpect.dat")
+  ;(vector-to-file diff "diff.dat")
   )
 
 ; Explore the parameter space.

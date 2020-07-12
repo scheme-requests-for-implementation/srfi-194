@@ -386,4 +386,11 @@
             (include "zipf-test.scm")
             (zipf-test-group))
 
+(test-group "Test sphere"
+            (include "sphere-test.scm")
+            (test-sphere 2 10)
+            (test-sphere 2 100)
+            (test-sphere 3 10)
+            (test-sphere 3 100))
+
 (test-end "srfi-194")

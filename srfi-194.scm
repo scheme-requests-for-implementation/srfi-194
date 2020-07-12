@@ -3,8 +3,8 @@
           (scheme case-lambda)
           (scheme inexact)
           (scheme complex)
-          (srfi 133) ;; vector-fold
-          (srfi 27))
+          (srfi 27)
+          (srfi 133))
 
   (cond-expand
     ((library (srfi 158)) (import (srfi 158)))
@@ -35,9 +35,12 @@
     make-exponential-generator
     make-geometric-generator
     make-poisson-generator
-    make-zipf-generator
+    make-zipf-generator 
+    make-sphere-generator
+    make-ball-generator
 
     gsampling)
 
   (include "srfi-194-impl.scm")
-  (include "zipf-zri.scm"))
+  (include "zipf-zri.scm")
+  (include "sphere.scm"))

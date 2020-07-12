@@ -371,7 +371,7 @@
                   (= el 2))
                 (gsampling (circular-generator 1) (circular-generator 2)))))
 
-
+; See zipf-test.scm
+(test-group "Test Zipf sampling" (zipf-test-group))
 
 (test-end "srfi-194")
-

@@ -170,11 +170,17 @@
 (test-zipf make-zipf-generator 129 1.0001  0 10000 9.5e-3)
 (test-zipf make-zipf-generator 129 1.00001 0 10000 9.5e-3)
 
-; Non-zero hurwicz parameter
+; Non-zero Hurwicz parameter
 (test-zipf make-zipf-generator 131 1.1     0.3    10000 9.5e-3)
 (test-zipf make-zipf-generator 131 1.1     1.3    10000 9.5e-3)
 (test-zipf make-zipf-generator 131 1.1     6.3    10000 9.5e-3)
 (test-zipf make-zipf-generator 131 1.1     20.23  10000 9.5e-3)
+
+; Negative Hurwicz parameter. Must be greater than branch point at -0.5.
+(test-zipf make-zipf-generator 81 1.1     -0.1   1000 4e-2)
+(test-zipf make-zipf-generator 81 1.1     -0.3   1000 4e-2)
+(test-zipf make-zipf-generator 81 1.1     -0.4   1000 4e-2)
+(test-zipf make-zipf-generator 81 1.1     -0.499 1000 4e-2)
 
 ; A walk into a stranger corner of the parameter space.
 (test-zipf make-zipf-generator 131 1.1     41.483 10000 10.5e-3)

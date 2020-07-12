@@ -231,6 +231,19 @@ variance is <code>(1-p)/p^2</code>.
 mean <var>L</var>, variance <var>L</var>.
 </p></dd></dl>
 
+<dl>
+<dt id="index-integers_002dzipf_0024"><code>(make-zipf-generator</code><var>
+N [ s [ q ] ]</var><code>)</code></dt>
+<dd><p>Creates a generator that yields integers <var>k</var> from the
+generalized Zipf distribution <code>1/(k+q)^s</code> with (1 &le; k &le; N).
+The default value of <var>s</var> is 1.0 and the default value of
+<var>q</var> is 0.0.  Parameters outside the valid range are likely
+to result in overflows or loss of precision.  Valid parameter ranges
+are real -10 &lt; <var>s</var> &lt; 100 and
+real -0.5 &lt; <var>q</var> &lt; 2e8 and
+integer 1 &le; <var>k</var>.
+</p></dd></dl>
+
 <h3 id="Generator-operations" class="subheading">Generator operations</h3>
 
 <dl>

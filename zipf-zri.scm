@@ -32,18 +32,18 @@
 	(define (hat x)
 		(expt (+ x q) (- s)))
 
+	(define 1ms (- 1 s))
+	(define oms (/ 1 1ms))
+
 	; The integral of hat(x)
 	; H(x) = (x+q)^{1-s} / (1-s)
 	; Note that H(x) is always negative.
 	(define (big-h x)
-		(define 1ms (- 1 s))
 		(/ (expt (+ q x) 1ms) 1ms))
 
 	; The inverse function of H(x)
 	; H^{-1}(y) = -q + (y(1-s))^{1/(1-s)}
 	(define (big-h-inv y)
-		(define 1ms (- 1 s))
-		(define oms (/ 1 1ms))
 		(- (expt (* y 1ms) oms) q))
 
 	; Lower and upper bounds for the uniform random generator.

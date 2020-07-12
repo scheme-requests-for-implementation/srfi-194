@@ -165,8 +165,12 @@
 
 ;------------------------------------------------------------------
 ;
+; (make-zipf-generator n [s [q]])
+;
 ; The Hurwicz zeta distribution 1 / (k+q)^s for 1 <= k <= n integer
 ; The Zipf distribution is recovered by setting q=0.
+; If `q` is not specified, 0 is assumed.
+; If `s` is not specified, 1 is assumed.
 ;
 ; Valid for real -10 < s < 100 (otherwise overflows likely)
 ; Valid for real -0.5 < q < 2e8 (otherwise overflows likely)
@@ -176,10 +180,16 @@
 ;    (define zgen (make-zipf-generator 50 1.01 0))
 ;    (generator->list zgen 10)
 ;
-(define (make-zipf-generator n s q)
-	(if (< 1e-5 (abs (- 1 s)))
-		(make-zipf-generator/zri n s q)
-		(make-zipf-generator/one n s q))
+(define make-zipf-generator
+	(case-lambda
+		((n)
+			(make-zipf-generator n 1.0 0.0))
+		((n s)
+			(make-zipf-generator n s 0.0))
+		((n s q)
+			(if (< 1e-5 (abs (- 1 s)))
+				(make-zipf-generator/zri n s q)
+				(make-zipf-generator/one n s q))))
 )
 
 *unspecified*

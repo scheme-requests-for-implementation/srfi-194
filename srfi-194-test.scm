@@ -3,19 +3,20 @@
   (scheme base)
   (scheme inexact)
   (scheme complex)
-  (srfi 27)
-  (srfi 64))
+  (scheme cxr)
+  (srfi 27))
 
 (cond-expand
   ((library (srfi 158)) (import (srfi 158)))
   ((library (srfi 121)) (import (srfi 121))))
 
-;; for testing custom rand source,
-;; since it's implementation specific
 (cond-expand
-  (gauche (import
-            (gauche base)
-            (math mt-random))))
+  (chibi (begin 
+           (import (except (chibi test) test-equal))
+           (define-syntax test-equal
+             (syntax-rules ()
+               ((_ args ...) (test args ...))))))
+  (else (import (srfi 64))))
 
 (define (assert-number-generator/all-in-range gen from to)
   (test-assert
@@ -30,25 +31,26 @@
   (define lower-quarter (+ from (* 0.25 range)))
   (define upper-quarter (- to (* 0.25 range)))
   (assert-number-generator/all-in-range gen from to)
+  
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num from)
              (< num lower-quarter)))
-      gen))
+      (gtake gen 1000)))
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num lower-quarter)
              (< num upper-quarter)))
-      gen))
+      (gtake gen 1000)))
 
   (test-assert
     (generator-any
       (lambda (num)
         (and (>= num upper-quarter)
              (< num to)))
-      gen)))
+      (gtake gen 1000))))
 
 (define (assert-int-generator gen byte-size signed?)
   (define from (if signed?
@@ -66,7 +68,17 @@
             (test-equal 5.0 (clamp-real-number 5.0 10.0 2.0))
             (test-equal 7.5 (clamp-real-number 5.0 10.0 7.5)))
 
-(test-group "Test with-random-source syntax"
+(test-group "Test with-random-source basic syntax"
+            (with-random-source default-random-source
+                                make-random-integer-generator 0 10))
+
+;; testing random source, which is implementation specific
+(cond-expand
+  (gauche
+    (import
+            (gauche base)
+            (math mt-random))
+    (test-group "Test with-random-source syntax"
             ;;create and consume generators that are made with different source
             ;;with various order, and check that order doesn't change the outcome
             (define (test-multiple-sources gen1-maker gen1-expect
@@ -85,26 +97,19 @@
                 (test-equal (generator->list gen2) gen2-expect)))
 
             (define multiple-sources-testcase
-              (cond-expand
-                (gauche (list (lambda ()
-                                (gtake (with-random-source
-                                       (make <mersenne-twister> :seed 0)
-                                       make-random-integer-generator 0 10)
-                                     5))
-                              '(5 5 7 8 6)
-                              (lambda ()
-                                (gtake (with-random-source
-                                       (make <mersenne-twister> :seed 1)
-                                       make-random-integer-generator 0 10)
-                                     5))
-                              '(4 9 7 9 0)))
-                (else #f)))
-
-            (when multiple-sources-testcase
-              (apply test-multiple-sources multiple-sources-testcase))
-
-            (with-random-source default-random-source
-                                make-random-integer-generator 0 10))
+              (list (lambda ()
+                      (gtake (with-random-source
+                               (make <mersenne-twister> :seed 0)
+                               make-random-integer-generator 0 10)
+                             5))
+                    '(5 5 7 8 6)
+                    (lambda ()
+                      (gtake (with-random-source
+                               (make <mersenne-twister> :seed 1)
+                               make-random-integer-generator 0 10)
+                             5))
+                    '(4 9 7 9 0)))
+            (apply test-multiple-sources multiple-sources-testcase))))
 
 (test-group "Test random int"
             (assert-number-generator
@@ -372,6 +377,4 @@
                 (gsampling (circular-generator 1) (circular-generator 2)))))
 
 
-
 (test-end "srfi-194")
-

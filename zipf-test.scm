@@ -229,4 +229,3 @@
 
 ; (test-end "srfi-194-zipf")
 )
-*unspecified*

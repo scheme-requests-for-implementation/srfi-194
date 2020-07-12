@@ -191,5 +191,3 @@
 				(make-zipf-generator/zri n s q)
 				(make-zipf-generator/one n s q))))
 )
-
-*unspecified*

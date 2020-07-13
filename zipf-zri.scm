@@ -48,7 +48,10 @@
 
 	; Lower and upper bounds for the uniform random generator.
 	; Note that both are negative for all values of s.
-	(define big-h-half (big-h 0.5))
+	; There's a 20% performance improvement by shifting the end of
+	; the range over by little bit.
+	(define big-h-half
+		(if (< 0.05 (abs q)) (big-h 0.5) (- (big-h 1.5) 1)))
 	(define big-h-n (big-h (+ n 0.5)))
 
 	; Rejection cut
@@ -64,9 +67,10 @@
 		(define x (big-h-inv u))
 		(define kflt (floor (+ x 0.5)))
 		(define k (inexact->exact kflt))
-		(if (or
-			(<= (- k x) cut)
-			(>= u (- (big-h (+ k 0.5)) (hat k)))) k #f))
+		(if (and (< 0 k)
+			(or
+				(<= (- k x) cut)
+				(>= u (- (big-h (+ k 0.5)) (hat k))))) k #f))
 
 	; Did we hit the dartboard? If not, try again.
 	(define (loop-until)

@@ -103,6 +103,21 @@
 	; Test for uniform convergence.
 	(test-assert (<= l0-norm TOL))
 
+	; The mean.
+	(define mean (/
+		(vector-fold (lambda (i sum x) (+ sum x)) 0 norm-dist)
+		NVOCAB))
+
+	(define root-mean-square (sqrt (/
+		(vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
+		NVOCAB)))
+
+	; Should not random walk too far away.
+	; Could tighten this with a proper theory of the error distribution.
+	(test-assert (< (abs mean) 3))
+	; I don't understand the error distribution ....
+	; (test-assert (and (< 0.4 root-mean-square) (< root-mean-square 1.5)))
+
 	(format #t "N=~D s=~9,6f q=~9,6f SAMP=~D rms-dev=~6,3f tol=~4,1f ~A\n"
 		NVOCAB ESS QUE REPS l0-norm TOL (if (<= l0-norm TOL) "PASS" "FAIL"))
 

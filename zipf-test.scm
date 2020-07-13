@@ -143,14 +143,13 @@
 ; Verify improving uniform convergence
 (test-zipf make-zipf-generator 30 1  0 10000   six-sigma)
 (test-zipf make-zipf-generator 30 1  0 100000  six-sigma)
-(test-zipf make-zipf-generator 30 1  0 1000000 six-sigma)
 
 ; Larger vocabulary
-(test-zipf make-zipf-generator 300 1.1     0 1000 six-sigma)
-(test-zipf make-zipf-generator 300 1.01    0 1000 six-sigma)
-(test-zipf make-zipf-generator 300 1.001   0 1000 six-sigma)
-(test-zipf make-zipf-generator 300 1.0001  0 1000 six-sigma)
-(test-zipf make-zipf-generator 300 1.00001 0 1000 six-sigma)
+(test-zipf make-zipf-generator 300 1.1     0 10000 six-sigma)
+(test-zipf make-zipf-generator 300 1.01    0 10000 six-sigma)
+(test-zipf make-zipf-generator 300 1.001   0 10000 six-sigma)
+(test-zipf make-zipf-generator 300 1.0001  0 10000 six-sigma)
+(test-zipf make-zipf-generator 300 1.00001 0 10000 six-sigma)
 
 ; Larger vocabulary. Take more samples....
 (test-zipf make-zipf-generator 3701 1.1     0 40000 six-sigma)
@@ -161,24 +160,25 @@
 
 ; Huge vocabulary; few samples. Many bins will be empty,
 ; causing the std-dev to get large.
-(test-zipf make-zipf-generator 43701 (+ 1 1e-6)  0 90000 7.5)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-7)  0 90000 7.5)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-9)  0 90000 7.5)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-12) 0 90000 7.5)
-(test-zipf make-zipf-generator 43701 1           0 90000 7.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-6)  0 60000 9.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-7)  0 60000 9.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-9)  0 60000 9.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-12) 0 60000 9.5)
+(test-zipf make-zipf-generator 43701 1           0 60000 9.5)
 
 ; Large s, small range
 (test-zipf make-zipf-generator 5 1.1     0 1000 six-sigma)
 (test-zipf make-zipf-generator 5 2.01    0 1000 six-sigma)
 (test-zipf make-zipf-generator 5 4.731   0 1000 six-sigma)
 (test-zipf make-zipf-generator 5 9.09001 0 1000 six-sigma)
-(test-zipf make-zipf-generator 5 13.45   0 1000 six-sigma)
+(test-zipf make-zipf-generator 5 13.45   0 1000 8.0)
 
-; Large s, larger range
-(test-zipf make-zipf-generator 130 1.5     0 1000 six-sigma)
-(test-zipf make-zipf-generator 130 2.03    0 1000 six-sigma)
-(test-zipf make-zipf-generator 130 4.5     0 1000 six-sigma)
-(test-zipf make-zipf-generator 130 6.66    0 1000 six-sigma)
+; Large s, larger range. Most histogram bins will be empty
+; so allow much larger error margins.
+(test-zipf make-zipf-generator 130 1.5     0 30000 six-sigma)
+(test-zipf make-zipf-generator 130 2.03    0 30000 9.0)
+(test-zipf make-zipf-generator 130 4.5     0 30000 16.0)
+(test-zipf make-zipf-generator 130 6.66    0 30000 24.0)
 
 ; Verify that accuracy improves with more samples.
 (test-zipf make-zipf-generator 129 1.1     0 10000 six-sigma)

@@ -115,15 +115,18 @@
 )
 
 ; Explore the parameter space.
-; The error bounds have been selected to be sort-of-ish tight, in that
-; the whole combined set of tests below will usually pass, failing only
-; once out of every dozen(?) or two(?) invocations.  The failures are
-; random but infrequent, exactly how they should be!
-;
 (define (zipf-test-group)
 
 ; (test-begin "srfi-194-zipf")
 
+; The unit test is computes something that is "almost" a standard
+; deviation for the error distribution. Except, maybe not quite,
+; I don't fully understand the theory. So most tests seem to come
+; in fine in well-under a six-sigma deviation, but some of the wilder
+; paramter choices misbehave, so six-sigma doesn't always work.
+; Also, when the number of bins is large, its easy to under-sample,
+; some bins end up empty and the std-dev is thrown off as a result.
+; Thus, the tolerance bounds below are hand-adjusted.
 (define six-sigma 6.0)
 
 ; Zoom into s->1

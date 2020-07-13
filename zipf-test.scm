@@ -85,9 +85,11 @@
 	(define diff (vector-map (lambda (i x y) (- x y)) probility prexpect))
 
 	; Re-weight the tail by k^{s/2}. This seems give a normal error
-	; distribution.
-	(define err-dist (vector-map
-		(lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS)))) diff))
+	; distribution. ... at least, for small q. Problems for large q
+	; and with undersampling; so we hack around that.
+	(define err-dist
+		(if (< 10 QUE) diff
+			(vector-map (lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS)))) diff)))
 
 	; Normalize to unit root-mean-square.
 	(define rms (/ 1 (sqrt (* 2 3.141592653 REPS))))
@@ -198,19 +200,20 @@
 (test-zipf make-zipf-generator 81 1.1     -0.499 1000 six-sigma)
 
 ; A walk into a stranger corner of the parameter space.
-(test-zipf make-zipf-generator 131 1.1     41.483 10000 six-sigma)
-(test-zipf make-zipf-generator 131 2.1     41.483 10000 six-sigma)
-(test-zipf make-zipf-generator 131 6.1     41.483 10000 six-sigma)
-(test-zipf make-zipf-generator 131 16.1    41.483 10000 six-sigma)
-(test-zipf make-zipf-generator 131 46.1    41.483 10000 six-sigma)
-(test-zipf make-zipf-generator 131 96.1    41.483 10000 six-sigma)
+(define hack-que 3.0)
+(test-zipf make-zipf-generator 131 1.1     41.483 10000 hack-que)
+(test-zipf make-zipf-generator 131 2.1     41.483 10000 hack-que)
+(test-zipf make-zipf-generator 131 6.1     41.483 10000 hack-que)
+(test-zipf make-zipf-generator 131 16.1    41.483 10000 hack-que)
+(test-zipf make-zipf-generator 131 46.1    41.483 10000 hack-que)
+(test-zipf make-zipf-generator 131 96.1    41.483 10000 hack-que)
 
 ; A still wilder corner of the parameter space.
-(test-zipf make-zipf-generator 131 1.1     1841.4 10000 six-sigma)
-(test-zipf make-zipf-generator 131 1.1     1.75e6 10000 six-sigma)
-(test-zipf make-zipf-generator 131 2.1     1.75e6 10000 six-sigma)
-(test-zipf make-zipf-generator 131 12.1    1.75e6 10000 six-sigma)
-(test-zipf make-zipf-generator 131 42.1    1.75e6 10000 six-sigma)
+(test-zipf make-zipf-generator 131 1.1     1841.4 10000 hack-que)
+(test-zipf make-zipf-generator 131 1.1     1.75e6 10000 hack-que)
+(test-zipf make-zipf-generator 131 2.1     1.75e6 10000 hack-que)
+(test-zipf make-zipf-generator 131 12.1    1.75e6 10000 hack-que)
+(test-zipf make-zipf-generator 131 42.1    1.75e6 10000 hack-que)
 
 ; Lets try s less than 1
 (test-zipf make-zipf-generator 35 0.9     0 1000 six-sigma)

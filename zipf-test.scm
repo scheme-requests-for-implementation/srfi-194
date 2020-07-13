@@ -101,7 +101,7 @@
 	; Test for uniform convergence.
 	(test-assert (<= l0-norm TOL))
 
-	(format #t "N=~D s=~9,6f q=~9,6f SAMP=~D rms-dev=~9,3f tol=~9,1f ~A\n"
+	(format #t "N=~D s=~9,6f q=~9,6f SAMP=~D rms-dev=~6,3f tol=~4,1f ~A\n"
 		NVOCAB ESS QUE REPS l0-norm TOL (if (<= l0-norm TOL) "PASS" "FAIL"))
 
 	; Utility debug printing
@@ -150,19 +150,20 @@
 (test-zipf make-zipf-generator 300 1.0001  0 1000 six-sigma)
 (test-zipf make-zipf-generator 300 1.00001 0 1000 six-sigma)
 
-; Larger vocabulary
-(test-zipf make-zipf-generator 3701 1.1     0 1000 six-sigma)
-(test-zipf make-zipf-generator 3701 1.01    0 1000 six-sigma)
-(test-zipf make-zipf-generator 3701 1.001   0 1000 six-sigma)
-(test-zipf make-zipf-generator 3701 1.0001  0 1000 six-sigma)
-(test-zipf make-zipf-generator 3701 1.00001 0 1000 six-sigma)
+; Larger vocabulary. Take more samples....
+(test-zipf make-zipf-generator 3701 1.1     0 40000 six-sigma)
+(test-zipf make-zipf-generator 3701 1.01    0 40000 six-sigma)
+(test-zipf make-zipf-generator 3701 1.001   0 40000 six-sigma)
+(test-zipf make-zipf-generator 3701 1.0001  0 40000 six-sigma)
+(test-zipf make-zipf-generator 3701 1.00001 0 40000 six-sigma)
 
-; Huge vocabulary
-(test-zipf make-zipf-generator 43701 (+ 1 1e-6)  0 1000 six-sigma)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-7)  0 1000 six-sigma)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-9)  0 1000 six-sigma)
-(test-zipf make-zipf-generator 43701 (+ 1 1e-12) 0 1000 six-sigma)
-(test-zipf make-zipf-generator 43701 1           0 1000 six-sigma)
+; Huge vocabulary; few samples. Many bins will be empty,
+; causing the std-dev to get large.
+(test-zipf make-zipf-generator 43701 (+ 1 1e-6)  0 90000 7.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-7)  0 90000 7.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-9)  0 90000 7.5)
+(test-zipf make-zipf-generator 43701 (+ 1 1e-12) 0 90000 7.5)
+(test-zipf make-zipf-generator 43701 1           0 90000 7.5)
 
 ; Large s, small range
 (test-zipf make-zipf-generator 5 1.1     0 1000 six-sigma)

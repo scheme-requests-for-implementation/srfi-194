@@ -52,7 +52,7 @@
 	(define big-h-n (big-h (+ n 0.5)))
 
 	; Rejection cut
-	(define cut (- 1 (big-h-inv (- (big-h 1.5) (expt (+ 1 q) (- s))))))
+	(define cut (- 1 (big-h-inv (- (big-h 1.5) (hat 1)))))
 
 	; Uniform distribution
 	(define dist (make-random-real-generator big-h-half big-h-n))

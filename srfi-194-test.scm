@@ -8,6 +8,7 @@
   (scheme cxr)
   (scheme file)
   (scheme write)
+  (srfi 1)
   (srfi 27)
   (srfi 133))
 
@@ -20,7 +21,12 @@
            (import (except (chibi test) test-equal))
            (define-syntax test-equal
              (syntax-rules ()
-               ((_ args ...) (test args ...))))))
+               ((_ args ...) (test args ...))))
+           (define-syntax test-approximate
+             (syntax-rules ()
+               ((_ target value max-delta)
+                (test-assert (and (<= value (+ target max-delta))
+                                  (>= value (- target max-delta)))))))))
   (else (import (srfi 64))))
 
 (define (assert-number-generator/all-in-range gen from to)
@@ -284,9 +290,9 @@
                                      (lambda (i) (= i k))
                                      (gtake poisson-gen 10000))
                                    10000))
-                 (define ratio (inexact (/ actual expect)))
-                 (test-assert (> ratio 0.8))
-                 (test-assert (< ratio 1.2)))
+                 (define ratio (/ actual expect))
+                 (test-assert (> ratio 8/10))
+                 (test-assert (< ratio 12/10)))
                (list->generator test-points)))
 
             (test-poisson 2 (make-poisson-generator 2) '(1 2 3))

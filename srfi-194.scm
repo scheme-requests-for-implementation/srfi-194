@@ -3,6 +3,7 @@
           (scheme case-lambda)
           (scheme inexact)
           (scheme complex)
+          (scheme write)
           (srfi 27)
           (srfi 133))
 

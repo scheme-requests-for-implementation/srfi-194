@@ -47,11 +47,7 @@
 		(- (expt (* y 1ms) oms) q))
 
 	; Lower and upper bounds for the uniform random generator.
-	; Note that both are negative for all values of s.
-	; There's a 20% performance improvement by shifting the end of
-	; the range over by little bit.
-	(define big-h-half
-		(if (< 0.05 (abs q)) (big-h 0.5) (- (big-h 1.5) 1)))
+	(define big-h-half (- (big-h 1.5) (hat 1)))
 	(define big-h-n (big-h (+ n 0.5)))
 
 	; Rejection cut
@@ -137,11 +133,7 @@
 		(- (exp (lg y)) q))
 
 	; Lower and upper bounds for the uniform random generator.
-	; Note that both are negative for all values of s.
-	; There's a 20% performance improvement by shifting the end of
-	; the range over by little bit.
-	(define big-h-half
-		(if (< 0.05 (abs q)) (big-h 0.5) (- (big-h 1.5) 1)))
+	(define big-h-half (- (big-h 1.5) (hat 1)))
 	(define big-h-n (big-h (+ n 0.5)))
 
 	; Rejection cut

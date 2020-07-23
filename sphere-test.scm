@@ -4,10 +4,10 @@
 ; * Every sample has unit length, within numerical tolerance.
 ; * The REPS samples are uniformly distributed.
 ; * Rotations of the REPS samples are uniformly distributed.
-(define (test-sphere N REPS)
+(define (test-sphere sphereg dim-sizes REPS rotate?)
   (define random-int (random-source-make-integers (current-random-source)))
   (define random-real (random-source-make-reals (current-random-source)))
-  (define sphereg (make-sphere-generator N))
+  (define N (- (vector-length dim-sizes) 1))
 
   ; Fix list of samples
   (define samples
@@ -15,9 +15,11 @@
 
   (define (l2-norm VEC)
     (sqrt (vector-fold 
-            (lambda (sum x) (+ sum (* x x))) 
+            (lambda (sum x l) (+ sum (/ (* x x)
+                                        (* l l)))) 
             0 
-            VEC)))
+            VEC
+            dim-sizes)))
 
   ; Rotate the j'th amnd k'th coordinates of a vector VEC
   ; by cosine co and sine si
@@ -33,15 +35,6 @@
                ((= index k) nk)
                (else (vector-ref VEC index))))
            (iota (vector-length VEC)))))
-
-  ; Randomly rotate a single vector in some plane.
-  (define (rand-pair-rot VEC)
-    (define j (random-int N))
-    (define k (+ j 1 (random-int (- N j))))
-    (define theta (* 3.14 (random-real)))
-    (define co (cos theta))
-    (define si (sin theta))
-    (pair-rot VEC j k co si))
 
   ; Apply a random rotation to a collection of vectors
   (define how-many-rots 
@@ -67,7 +60,7 @@
   ; converge to zero, within pi/2 sqrt(REPS).
   (define (converge-to-zero samples)
     (fold (lambda (acc sample) (vector-map + sample acc))
-          (make-vector REPS 0) 
+          (make-vector REPS 0.0) 
           samples))
 
   (define (should-be-zero samples) 
@@ -81,7 +74,7 @@
     (test-assert (< zz 1)))
 
   ; maximum allowed tolerance for radius deviation
-  (define EPS (* 2e-16 (sqrt N)))
+  (define EPS (* 2e-15 (sqrt N)))
 
   ; Each individual sphere radius should be 1.0 to within float
   ; tolerance.
@@ -94,6 +87,46 @@
   (check-zero samples)
 
   ; Rotate wildly. Should still be uniform.
-  (for-each
-    (lambda (junk) (check-zero (arb-rot samples)))
-    (make-list 12)))
+  (when rotate?
+    (for-each
+      (lambda (junk) (check-zero (arb-rot samples)))
+      (make-list 12))))
+
+(define (test-ball ballg dim-sizes)
+  (define (l2-norm VEC)
+    (sqrt (vector-fold 
+            (lambda (sum x l) (+ sum (/ (* x x)
+                                        (* l l)))) 
+            0 
+            VEC
+            dim-sizes)))
+  
+  (define (test-ball-generates-on-radius radius err)
+    (test-assert
+      (generator-any
+        (lambda (vec)
+          (define n (l2-norm vec))
+          (and (> n (- radius err))
+               (< n (+ radius err))))
+        (gtake ballg 10000))))
+  
+  (define (test-ball-avg-zero N)
+    (define vec-sum
+      (generator-fold
+        (lambda (vec acc) 
+          (vector-map + vec acc))
+        (make-vector (vector-length dim-sizes) 0.0)
+        (gtake ballg N)))
+    (define avg-vec
+      (vector-map
+        (lambda (e)
+          (/ e N))
+        vec-sum))
+    (define n (l2-norm avg-vec))
+    (test-assert (< n 1)))
+  
+  (test-ball-generates-on-radius 0.0 0.1)
+  (test-ball-generates-on-radius 0.5 0.1)
+  (test-ball-generates-on-radius 1.0 0.1)
+  
+  (test-ball-avg-zero 5000))

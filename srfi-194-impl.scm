@@ -1,7 +1,13 @@
 ;;
-;; Parameters & syntax
+;; Parameters
 ;;
 (define current-random-source (make-parameter default-random-source))
+
+(define (with-random-source random-source thunk)
+  (unless (random-source? random-source)
+    (error "expected random source"))
+  (parameterize ((current-random-source random-source))
+                (thunk)))
 
 (define-syntax with-random-source
   (syntax-rules ()

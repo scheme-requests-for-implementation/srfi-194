@@ -81,7 +81,7 @@
 
 (test-group "Test with-random-source basic syntax"
             (with-random-source default-random-source
-                                make-random-integer-generator 0 10))
+                                (lambda () (make-random-integer-generator 0 10))))
 
 ;; testing random source, which is implementation specific
 (cond-expand
@@ -111,13 +111,13 @@
               (list (lambda ()
                       (gtake (with-random-source
                                (make <mersenne-twister> :seed 0)
-                               make-random-integer-generator 0 10)
+                               (lambda () (make-random-integer-generator 0 10)))
                              5))
                     '(5 5 7 8 6)
                     (lambda ()
                       (gtake (with-random-source
                                (make <mersenne-twister> :seed 1)
-                               make-random-integer-generator 0 10)
+                               (lambda () (make-random-integer-generator 0 10)))
                              5))
                     '(4 9 7 9 0)))
             (apply test-multiple-sources multiple-sources-testcase))))
@@ -394,9 +394,21 @@
 
 (test-group "Test sphere"
             (include "sphere-test.scm")
-            (test-sphere 2 10)
-            (test-sphere 2 100)
-            (test-sphere 3 10)
-            (test-sphere 3 100))
+            (test-sphere (make-sphere-generator 1) (vector 1.0 1.0) 200 #t)
+            (test-sphere (make-sphere-generator 2) (vector 1.0 1.0 1.0) 200 #t)
+            (test-sphere (make-sphere-generator 3) (vector 1.0 1.0 1.0 1.0) 200 #t)
+            
+            (test-sphere (make-sphere-generator (vector 1.0 1.0)) (vector 1.0 1.0) 200 #t)
+            (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0)) (vector 1.0 1.0 1.0) 200 #t)
+            (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0 1.0)) (vector 1.0 1.0 1.0 1.0) 200 #t)
+            
+            (test-sphere (make-sphere-generator (vector 1.0 3.0)) (vector 1.0 3.0) 200 #f)
+            (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0) 200 #f)
+            (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0 7.0)) (vector 1.0 3.0 5.0 7.0) 200 #f)
+            
+            (test-ball (make-ball-generator 2) (vector 1.0 1.0))
+            (test-ball (make-ball-generator 3) (vector 1.0 1.0 1.0))
+            (test-ball (make-ball-generator (vector 1.0 3.0)) (vector 1.0 3.0))
+            (test-ball (make-ball-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0)))
 
 (test-end "srfi-194")

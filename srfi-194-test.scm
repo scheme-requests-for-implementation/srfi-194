@@ -257,7 +257,7 @@
 (test-group "Test categorical"
             (define result-vec (vector 0 0 0))
             (define expect-vec (vector 2000 5000 3000))
-            (define pvec (vector 0.2 0.5 0.3))
+            (define pvec (vector 0.2 0.5))
             (define g (make-categorical-generator pvec))
             (generator-for-each
               (lambda (i)
@@ -270,7 +270,7 @@
                 (test-assert (< ratio 1.1)))
               result-vec
               expect-vec)
-            (test-error (make-categorical-generator (vector 0.5))))
+            (test-error (make-categorical-generator (vector 0.5 0.9))))
 
 (test-group "Test poisson"
             ;;TODO import from somewhere?

@@ -23,10 +23,12 @@
 ;;
 
 (define (make-random-integer-generator low-bound up-bound)
-  (when (not (integer? low-bound))
-    (error "expected integer"))
-  (when (not (integer? up-bound))
-    (error "expected integer"))
+  (unless (and (integer? low-bound)
+               (exact? low-bound))
+    (error "expected exact integer for lower bound"))
+  (unless (and (integer? up-bound)
+               (exact? up-bound))
+    (error "expected exact integer for upper bound"))
   (let ((rand-int-proc (random-source-make-integers (current-random-source)))
         (range (- up-bound low-bound)))
     (lambda ()
@@ -52,6 +54,10 @@
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
 (define (clamp-real-number lower-bound upper-bound value)
+  (unless (real? lower-bound)
+    (error "expected real number for lower bound"))
+  (unless (real? upper-bound)
+    (error "expected real number for upper bound"))
   (cond
     ((> lower-bound upper-bound) (error "clamp lower bound cannot be bigger than upper bound"))
     ((< value lower-bound) lower-bound)
@@ -59,10 +65,12 @@
     (else value)))
 
 (define (make-random-real-generator low-bound up-bound)
-  (when (not (number? low-bound))
-    (error "expected number"))
-  (when (not (number? up-bound))
-    (error "expected number"))
+  (unless (and (real? low-bound)
+               (finite? low-bound))
+    (error "expected finite real number for lower bound"))
+  (unless (and (real? up-bound)
+               (finite? up-bound))
+    (error "expected finite real number for upper bound"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (define t (rand-real-proc))
@@ -104,6 +112,8 @@
 (define PI (* 4 (atan 1.0)))
 
 (define (make-bernoulli-generator p)
+  (unless (real? p)
+    (error "expected p to be real"))
   (when (or (< p 0) (> p 1))
     (error "expected 0 <= p <= 1"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
@@ -112,6 +122,8 @@
          0
          1))))
 
+;; note, pvec has 1 less length than the amount of categories.
+;; last category has implicit probability of 1 minus the rest
 (define (make-categorical-generator pvec)
   (define prob-sum
     (vector-fold
@@ -122,14 +134,18 @@
         (+ sum p))
       0
       pvec))
-  (unless (= prob-sum 1)
-    (error "sum of given probabilities must be equal to 1"))
+  (define length (vector-length pvec))
+  (unless (<= prob-sum 1)
+    (error "sum of given probabilities mustn't be greater than 1"))
   (let ((real-gen (make-random-real-generator 0 1)))
    (lambda ()
      (define roll (real-gen))
      (let it ((sum 0)
               (i 0))
-       (if (< roll (+ sum (vector-ref pvec i)))
+       (if (or
+             ;; not matching of any elements in the vector -- return implicit last one
+             (>= i length)
+             (< roll (+ sum (vector-ref pvec i))))
            i
            (it (+ sum (vector-ref pvec i))
                (+ i 1)))))))
@@ -152,6 +168,11 @@
     ((mean deviation)
      (let ((rand-real-proc (random-source-make-reals (current-random-source)))
            (state #f))
+       (unless (real? mean)
+         (error "expected mean to be real number"))
+       (unless (and (real? deviation)
+                    (> deviation 0))
+         (error "expected deviation to be positive real number"))
        (lambda ()
          (if state
              (let ((result state))
@@ -163,15 +184,22 @@
                (+ mean (* deviation r (sin theta))))))))))
 
 (define (make-exponential-generator mean)
+  (unless (and (real? mean)
+               (finite? mean))
+    (error "expected mean to be finite real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (- (* mean (log (rand-real-proc)))))))
 
 (define (make-geometric-generator p)
+  (unless (and (real? p)
+               (>= p 0)
+               (<= p 1))
+    (error "expected p to be real number, 0 <= p <= 1"))
   (let ((c (/ (log (- 1.0 p))))
         (rand-real-proc (random-source-make-reals (current-random-source))))
     (lambda ()
-      (ceiling (* c (log (rand-real-proc)))))))
+      (exact (ceiling (* c (log (rand-real-proc))))))))
 
 ;; Draw from poisson distribution with mean L, variance L.
 ;; For small L, we use Knuth's method.  For larger L, we use rejection
@@ -184,6 +212,9 @@
 ;; and therefore is not entirely thread safe (should still produce correct result, but with performance hit if table
 ;; is recalculated multiple times)
 (define (make-poisson-generator L)
+  (unless (and (real? L)
+               (> L 0))
+    (error "expected L to be positive real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (if (< L 36)
        (make-poisson/small rand-real-proc L)

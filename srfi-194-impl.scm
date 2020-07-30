@@ -321,3 +321,159 @@
           (pick)))))
 
 
+;;; Code for binomial random variable generation.
+
+;;; binomial-geometric is somewhat classical, the
+;;; "First waiting time algorithm" from page 525 of
+;;; Devroye, L. (1986), Non-Uniform Random Variate
+;;; Generation, Springer-Verlag, New York.
+
+;;; binomial-rejection is algorithm BTRS from
+;;; Hormann, W. (1993), The generation of binomial
+;;; random variates, Journal of Statistical Computation
+;;; and Simulation, 46:1-2, 101-110,
+;;; DOI: https://doi.org/10.1080/00949659308811496
+;;; stirling-tail is also from that paper.
+
+;;; Another implementation of the same algorithm is at
+;;; https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/kernels/random_binomial_op.cc
+;;; That implementation pointed out at least two bugs in the
+;;; BTRS paper.
+
+(define (stirling-tail k)
+  ;; Computes
+  ;;
+  ;; \log(k!)-[\log(\sqrt{2\pi})+(k+\frac12)\log(k+1)-(k+1)]
+  ;;
+  (let ((small-k-table
+         ;; Computed using computable reals package
+         ;; Matches values in paper, which are given
+         ;; for 0\leq k < 10
+         '#(.08106146679532726
+            .0413406959554093
+            .02767792568499834
+            .020790672103765093
+            .016644691189821193
+            .013876128823070748
+            .01189670994589177
+            .010411265261972096
+            .009255462182712733
+            .00833056343336287
+            .007573675487951841
+            .00694284010720953
+            .006408994188004207
+            .0059513701127588475
+            .005554733551962801
+            .0052076559196096404
+            .004901395948434738
+            .004629153749334028
+            .004385560249232324
+            .004166319691996922)))
+    (if (< k 20)
+        (vector-ref small-k-table k)
+        ;; the correction term (+ (/ (* 12 (+ k 1))) ...)
+        ;; in Stirling's approximation to log(k!)
+        (let* ((inexact-k+1 (inexact (+ k 1)))
+               (inexact-k+1^2 (square inexact-k+1)))
+          (/ (- #i1/12
+                (/ (- #i1/360
+                      (/ #i1/1260 inexact-k+1^2))
+                   inexact-k+1^2))
+             inexact-k+1)))))
+
+(define (make-binomial-generator n p)
+  (if (not (and (real? p)
+                (<= 0 p 1)
+                (exact-integer? n)
+                (positive? n)))
+       (error "make-binomial-generator: Bad parameters: " n p)
+       (cond ((< 1/2 p)
+              (let ((complement (make-binomial-generator n (- 1 p))))
+                (lambda ()
+                  (- n (complement)))))
+             ((zero? p)
+              (lambda () 0))
+             ((< (* n p) 10)
+              (binomial-geometric n p))
+             (else
+              (binomial-rejection n p)))))
+      
+(define (binomial-geometric n p)
+  (let ((geom (make-geometric-generator p)))
+    (lambda ()
+      (let loop ((X -1)
+                 (sum 0))
+        (if (< n sum)
+            X
+            (loop (+ X 1)
+                  (+ sum (geom))))))))
+
+(define (binomial-rejection n p)
+  ;; call when p <= 1/2 and np >= 10
+  ;; Use notation from the paper
+  (let* ((spq
+          (inexact (sqrt (* n p (- 1 p)))))
+         (b
+          (+ 1.15 (* 2.53 spq)))
+         (a
+          (+ -0.0873
+             (* 0.0248 b)
+             (* 0.01 p)))
+         (c
+          (+ (* n p) 0.5))
+         (v_r
+          (- 0.92
+             (/ 4.2 b)))
+         (alpha
+          ;; The formula in BTRS has 1.5 instead of 5.1;
+          ;; The formula for alpha in algorithm BTRD and Table 1
+          ;; and the tensorflow code uses 5.1, so we use 5.1
+          (* (+ 2.83 (/ 5.1 b)) spq))
+         (lpq
+          (log (/ p (- 1 p))))
+         (m
+          (exact (floor (* (+ n 1) p))))
+         (rand-real-proc
+          (random-source-make-reals (current-random-source))))
+    (lambda ()
+      (let loop ((u (rand-real-proc))
+                 (v (rand-real-proc)))
+        (let* ((u
+                (- u 0.5))
+               (us
+                (- 0.5 (abs u)))
+               (k
+                (exact
+                 (floor
+                  (+ (* (+ (* 2. (/ a us)) b) u) c)))))
+          (cond ((or (fx< k 0)
+                     (fx< n k))
+                 (loop (random-real)
+                       (random-real)))
+                ((and (<= 0.07 us)
+                      (<= v v_r))
+                 k)
+                (else
+                 (let ((v
+                        ;; The tensorflow code notes that BTRS doesn't have
+                        ;; this logarithm; BTRS is incorrect (see BTRD, step 3.2)
+                        (log (* v (/ alpha
+                                     (+ (/ a (square us)) b))))))
+                   (if (<=  v 
+                            (+ (* (+ m 0.5)
+                                  (log (* (/ (+ m 1.)
+                                             (- n m -1.)))))
+                               (* (+ n 1.)
+                                  (log (/ (- n m -1.)
+                                          (- n k -1.))))
+                               (* (+ k 0.5)
+                                  (log (* (/ (- n k -1.)
+                                             (+ k 1.)))))
+                               (* (- k m) lpq)
+                               (- (+ (stirling-tail m)
+                                     (stirling-tail (- n m)))
+                                  (+ (stirling-tail k)
+                                     (stirling-tail (- n k))))))
+                       k
+                       (loop (random-real)
+                             (random-real)))))))))))

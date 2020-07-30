@@ -411,4 +411,48 @@
             (test-ball (make-ball-generator (vector 1.0 3.0)) (vector 1.0 3.0))
             (test-ball (make-ball-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0)))
 
+(test-group "Test binomial"
+            (define (factorial n)
+              (if (<= n 1)
+                  1
+                  (* n (factorial (- n 1)))))
+            (define (C n k)
+              (/ (factorial n)
+                 (* (factorial k) (factorial (- n k)))))
+            (define (expected-frac n p k)
+              (* (C n k) (expt p k) (expt (- 1 p) (- n k))))
+            
+            (define (test-binomial n p count)
+              (define g (make-binomial-generator n p))
+              (define counts (make-vector (+ n 1) 0))
+              (generator-for-each
+                  (lambda (x)
+                    (vector-set! counts x (+ 1 (vector-ref counts x))))
+                  (gtake g count))
+              (for-each
+                (lambda (k)
+                  (define expected (* count (expected-frac n p k) ))
+                  (define actual (vector-ref counts k))
+                  (cond 
+                    ((> expected 1) 
+                     (test-approximate 1.0 (/ actual expected) 0.3))
+                    ((= expected 0)
+                     (test-equal 0 actual))
+                    ((<= expected (/ 1 count))
+                     (test-assert (< actual (/ 2 count))))))
+                (iota (+ n 1))))
+            
+            (test-binomial 1 0 100)
+            (test-binomial 1 1 100)
+            (test-binomial 1 0. 100)
+            (test-binomial 1 1. 100)
+            (test-binomial 10 0 100)
+            (test-binomial 10 1 100)
+            (test-binomial 10 0. 100)
+            (test-binomial 10 1. 100)
+            (test-binomial 10 0.25 10000)
+            (test-binomial 40 0.375 1000000))
+
+
+
 (test-end "srfi-194")

@@ -31,6 +31,7 @@
     make-random-complex-generator
 
     make-bernoulli-generator
+    make-binomial-generator
     make-categorical-generator
     make-normal-generator
     make-exponential-generator

@@ -446,8 +446,8 @@
                 (exact
                  (floor
                   (+ (* (+ (* 2. (/ a us)) b) u) c)))))
-          (cond ((or (fx< k 0)
-                     (fx< n k))
+          (cond ((or (< k 0)
+                     (< n k))
                  (loop (random-real)
                        (random-real)))
                 ((and (<= 0.07 us)

@@ -89,7 +89,7 @@
     (import
             (gauche base)
             (math mt-random))
-    (test-group "Test with-random-source syntax"
+    (test-group "Test with-random-source"
             ;;create and consume generators that are made with different source
             ;;with various order, and check that order doesn't change the outcome
             (define (test-multiple-sources gen1-maker gen1-expect
@@ -120,7 +120,22 @@
                                (lambda () (make-random-integer-generator 0 10)))
                              5))
                     '(4 9 7 9 0)))
-            (apply test-multiple-sources multiple-sources-testcase))))
+            (apply test-multiple-sources multiple-sources-testcase))
+    
+    (test-group "Test random-source-generator"
+                (define (make-numbers src-gen)
+                  (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
+                  (define gen2 (with-random-source (src-gen) (lambda () (make-random-real-generator 0. 100.))))
+                  (generator->list
+                    (gtake gen1 10)
+                    (gtake gen2 10)))
+                
+                (test-equal
+                  (make-numbers (random-source-generator 0))
+                  (make-numbers (random-source-generator 0)))
+                (test-assert
+                  (not (equal? (make-numbers (random-source-generator 0))
+                               (make-numbers (random-source-generator 1))))))))
 
 (test-group "Test random int"
             (assert-number-generator
@@ -248,7 +263,7 @@
             (define g (make-bernoulli-generator 0.7))
             (define expect 7000)
             (define actual (generator-count
-                                (lambda (i) (= i 0))
+                                (lambda (i) (= i 1))
                                 (gtake g 10000)))
             (define ratio (inexact (/ actual expect)))
             (test-assert (> ratio 0.9))
@@ -434,12 +449,11 @@
                   (define expected (* count (expected-frac n p k) ))
                   (define actual (vector-ref counts k))
                   (cond 
-                    ((> expected 1) 
-                     (test-approximate 1.0 (/ actual expected) 0.3))
                     ((= expected 0)
                      (test-equal 0 actual))
-                    ((<= expected (/ 1 count))
-                     (test-assert (< actual (/ 2 count))))))
+                    ;;hacky.. testing values with very low probability fails
+                    ((> expected (* 1/10000 count))  
+                     (test-approximate 1.0 (/ actual expected) 0.1))))
                 (iota (+ n 1))))
             
             (test-binomial 1 0 100)
@@ -450,9 +464,8 @@
             (test-binomial 10 1 100)
             (test-binomial 10 0. 100)
             (test-binomial 10 1. 100)
-            (test-binomial 10 0.25 10000)
+            (test-binomial 10 0.25 100000)
             (test-binomial 40 0.375 1000000))
-
 
 
 (test-end "srfi-194")

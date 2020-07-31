@@ -9,15 +9,6 @@
   (parameterize ((current-random-source random-source))
                 (thunk)))
 
-(define-syntax with-random-source
-  (syntax-rules ()
-    ((_ random-source proc arg ...)
-     (begin
-       (unless (random-source? random-source)
-         (error "expected random source"))
-       (parameterize ((current-random-source random-source))
-                     (proc arg ...))))))
-
 ;;
 ;; Carefully return consecutive substreams of the s'th
 ;; SRFI 27 stream of random numbers.  See Sections 1.2 and

@@ -127,8 +127,9 @@
                   (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
                   (define gen2 (with-random-source (src-gen) (lambda () (make-random-real-generator 0. 100.))))
                   (generator->list
+                    (gappend
                     (gtake gen1 10)
-                    (gtake gen2 10)))
+                    (gtake gen2 10))))
                 
                 (test-equal
                   (make-numbers (random-source-generator 0))

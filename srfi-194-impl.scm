@@ -19,6 +19,24 @@
                      (proc arg ...))))))
 
 ;;
+;; Carefully return consecutive substreams of the s'th
+;; SRFI 27 stream of random numbers.  See Sections 1.2 and
+;; 1.3 of "An object-oriented random-number package with many
+;; long streams and substreams", by Pierre L'Ecuyer, Richard
+;; Simard, E. Jack Chen, and W. David Kelton, Operatios Research,
+;; vol. 50 (2002), pages 1073-1075.
+;; https://doi.org/10.1287/opre.50.6.1073.358
+;;
+
+(define (random-source-generator s)
+  (let ((substream 0))
+    (lambda ()
+      (let ((new-source (make-random-source))) ;; deterministic
+        (random-source-pseudo-randomize! new-source s substream)
+        (set! substream (+ substream 1))
+        new-source)))) 
+
+;;
 ;; Primitive randoms
 ;;
 
@@ -119,8 +137,8 @@
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (if (<= (rand-real-proc) p)
-         0
-         1))))
+         1
+         0))))
 
 ;; note, pvec has 1 less length than the amount of categories.
 ;; last category has implicit probability of 1 minus the rest

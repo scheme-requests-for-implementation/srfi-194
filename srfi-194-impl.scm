@@ -29,7 +29,7 @@
           (let ((new-source (make-random-source))) ;; deterministic
             (random-source-pseudo-randomize! new-source s substream)
             (set! substream (+ substream 1))
-            new-source)))) 
+            new-source)))))
 
 ;;
 ;; Primitive randoms

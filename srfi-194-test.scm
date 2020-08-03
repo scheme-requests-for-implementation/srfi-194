@@ -29,6 +29,15 @@
                                   (>= value (- target max-delta)))))))))
   (else (import (srfi 64))))
 
+;; syntax just we can plop it at top and still allow internal `define`s 
+(define-syntax reset-source!
+  (syntax-rules ()
+    ((_) 
+     (define _ (random-source-pseudo-randomize! (current-random-source) 0 0)))))
+
+(define (reset-source!*)
+  (random-source-pseudo-randomize! (current-random-source) 0 0))
+
 (define (assert-number-generator/all-in-range gen from to)
   (test-assert
     (generator-every
@@ -42,7 +51,7 @@
   (define lower-quarter (+ from (* 0.25 range)))
   (define upper-quarter (- to (* 0.25 range)))
   (assert-number-generator/all-in-range gen from to)
-  
+
   (test-assert
     (generator-any
       (lambda (num)
@@ -75,11 +84,13 @@
 (test-begin "srfi-194")
 
 (test-group "Test clamp real number"
+            (reset-source!)
             (test-equal 10.0 (clamp-real-number 5.0 10.0 11))
             (test-equal 5.0 (clamp-real-number 5.0 10.0 2.0))
             (test-equal 7.5 (clamp-real-number 5.0 10.0 7.5)))
 
 (test-group "Test with-random-source basic syntax"
+            (reset-source!)
             (with-random-source default-random-source
                                 (lambda () (make-random-integer-generator 0 10))))
 
@@ -87,57 +98,60 @@
 (cond-expand
   (gauche
     (import
-            (gauche base)
-            (math mt-random))
+      (gauche base)
+      (math mt-random))
     (test-group "Test with-random-source"
-            ;;create and consume generators that are made with different source
-            ;;with various order, and check that order doesn't change the outcome
-            (define (test-multiple-sources gen1-maker gen1-expect
-                                           gen2-maker gen2-expect)
+                (reset-source!)
+                ;;create and consume generators that are made with different source
+                ;;with various order, and check that order doesn't change the outcome
+                (define (test-multiple-sources gen1-maker gen1-expect
+                                               gen2-maker gen2-expect)
 
-              ;;create gen1, consume gen1, create gen2, consume gen2
-              (let ((gen1 (gen1-maker)))
-               (test-equal (generator->list gen1) gen1-expect)
-               (let ((gen2 (gen2-maker)))
-                (test-equal (generator->list gen2) gen2-expect)))
+                  ;;create gen1, consume gen1, create gen2, consume gen2
+                  (let ((gen1 (gen1-maker)))
+                   (test-equal (generator->list gen1) gen1-expect)
+                   (let ((gen2 (gen2-maker)))
+                    (test-equal (generator->list gen2) gen2-expect)))
 
-              ;;create gen1, create gen2, consume gen1, consume gen2
-              (let ((gen1 (gen1-maker))
-                    (gen2 (gen2-maker)))
-                (test-equal (generator->list gen1) gen1-expect)
-                (test-equal (generator->list gen2) gen2-expect)))
+                  ;;create gen1, create gen2, consume gen1, consume gen2
+                  (let ((gen1 (gen1-maker))
+                        (gen2 (gen2-maker)))
+                    (test-equal (generator->list gen1) gen1-expect)
+                    (test-equal (generator->list gen2) gen2-expect)))
 
-            (define multiple-sources-testcase
-              (list (lambda ()
-                      (gtake (with-random-source
-                               (make <mersenne-twister> :seed 0)
-                               (lambda () (make-random-integer-generator 0 10)))
-                             5))
-                    '(5 5 7 8 6)
-                    (lambda ()
-                      (gtake (with-random-source
-                               (make <mersenne-twister> :seed 1)
-                               (lambda () (make-random-integer-generator 0 10)))
-                             5))
-                    '(4 9 7 9 0)))
-            (apply test-multiple-sources multiple-sources-testcase))))
+                (define multiple-sources-testcase
+                  (list (lambda ()
+                          (gtake (with-random-source
+                                   (make <mersenne-twister> :seed 0)
+                                   (lambda () (make-random-integer-generator 0 10)))
+                                 5))
+                        '(5 5 7 8 6)
+                        (lambda ()
+                          (gtake (with-random-source
+                                   (make <mersenne-twister> :seed 1)
+                                   (lambda () (make-random-integer-generator 0 10)))
+                                 5))
+                        '(4 9 7 9 0)))
+                (apply test-multiple-sources multiple-sources-testcase))))
 
 (test-group "Test random-source-generator"
-                (define (make-numbers src-gen)
-                  (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
-                  (define gen2 (with-random-source (src-gen) (lambda () (make-random-real-generator 0. 100.))))
-                  (generator->list
-                    (gappend
-                    (gtake gen1 10)
-                    (gtake gen2 10))))
-                
-                (test-equal
-                  (make-numbers (random-source-generator 0))
-                  (make-numbers (random-source-generator 0)))
-                (test-assert
-                  (not (equal? (make-numbers (random-source-generator 0))
-                               (make-numbers (random-source-generator 1))))))
+            (reset-source!)
+            (define (make-numbers src-gen)
+              (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
+              (define gen2 (with-random-source (src-gen) (lambda () (make-random-real-generator 0. 100.))))
+              (generator->list
+                (gappend
+                  (gtake gen1 10)
+                  (gtake gen2 10))))
+
+            (test-equal
+              (make-numbers (random-source-generator 0))
+              (make-numbers (random-source-generator 0)))
+            (test-assert
+              (not (equal? (make-numbers (random-source-generator 0))
+                           (make-numbers (random-source-generator 1))))))
 (test-group "Test random int"
+            (reset-source!)
             (assert-number-generator
               (make-random-integer-generator 1 100)
               1 100)
@@ -170,6 +184,7 @@
                 (gtake (make-random-u1-generator) 100))))
 
 (test-group "Test random real"
+            (reset-source!)
             (assert-number-generator
               (make-random-real-generator 1.0 5.0)
               1.0 5.0)
@@ -181,6 +196,7 @@
                 (make-random-real-generator 1.0 5.0))))
 
 (test-group "Test complex"
+            (reset-source!)
             (assert-number-generator
               (gmap
                 real-part
@@ -201,6 +217,7 @@
                 (make-random-complex-generator -10.0 -10.0 10.0 10.0))))
 
 (test-group "Test random bool"
+            (reset-source!)
             (test-assert
               (generator-every
                 (lambda (v)
@@ -221,6 +238,7 @@
                 (make-random-boolean-generator))))
 
 (test-group "Test random char"
+            (reset-source!)
             (test-assert
               (generator-every
                 (lambda (v)
@@ -242,14 +260,15 @@
                 (make-random-char-generator "ab"))))
 
 (test-group "Test random string"
+            (reset-source!)
             (test-assert
               (generator-every
                 (lambda (str)
                   (and (< (string-length str) 5)
                        (every (lambda (c)
-                                   (or (equal? c #\a)
-                                         (equal? c #\b)))
-                                 (string->list str))))
+                                (or (equal? c #\a)
+                                    (equal? c #\b)))
+                              (string->list str))))
                 (gtake (make-random-string-generator 5 "ab")
                        10000)))
 
@@ -260,16 +279,18 @@
                 (make-random-string-generator 4 "ab"))))
 
 (test-group "Test Bernoulli"
+            (reset-source!)
             (define g (make-bernoulli-generator 0.7))
             (define expect 7000)
             (define actual (generator-count
-                                (lambda (i) (= i 1))
-                                (gtake g 10000)))
+                             (lambda (i) (= i 1))
+                             (gtake g 10000)))
             (define ratio (inexact (/ actual expect)))
             (test-assert (> ratio 0.9))
             (test-assert (< ratio 1.1)))
 
 (test-group "Test categorical"
+            (reset-source!)
             (define result-vec (vector 0 0 0))
             (define expect-vec (vector 2000 5000 3000))
             (define pvec (vector 0.2 0.5))
@@ -288,6 +309,7 @@
             (test-error (make-categorical-generator (vector 0.5 0.9))))
 
 (test-group "Test poisson"
+            (reset-source!)
             ;;TODO import from somewhere?
             (define (fact k)
               (cond
@@ -298,23 +320,24 @@
                  (fact k)))
 
             (define (test-poisson L poisson-gen test-points)
-             (generator-every
-               (lambda (k)
-                 (define expect (expected-fraction L k))
-                 (define actual (/ (generator-count
-                                     (lambda (i) (= i k))
-                                     (gtake poisson-gen 10000))
-                                   10000))
-                 (define ratio (/ actual expect))
-                 (test-assert (> ratio 8/10))
-                 (test-assert (< ratio 12/10)))
-               (list->generator test-points)))
+              (generator-every
+                (lambda (k)
+                  (define expect (expected-fraction L k))
+                  (define actual (/ (generator-count
+                                      (lambda (i) (= i k))
+                                      (gtake poisson-gen 10000))
+                                    10000))
+                  (define ratio (/ actual expect))
+                  (test-assert (> ratio 8/10))
+                  (test-assert (< ratio 12/10)))
+                (list->generator test-points)))
 
             (test-poisson 2 (make-poisson-generator 2) '(1 2 3))
             (test-poisson 40 (make-poisson-generator 40) '(30 40 50))
             (test-poisson 280 (make-poisson-generator 280) '(260 280 300)))
 
 (test-group "Test normal"
+            (reset-source!)
             (define frac-at-1dev 0.34134)
             (define frac-at-2dev 0.47725)
             (define frac-at-3dev 0.49865)
@@ -339,6 +362,7 @@
             (test-normal (make-normal-generator 1.0 2.0) 1.0 2.0))
 
 (test-group "Test exponential"
+            (reset-source!)
             (define (expected-fraction mean x)
               (- 1 (exp (* (- (/ 1.0 mean)) x))))
 
@@ -360,6 +384,7 @@
             (test-exp (make-exponential-generator 1.5) 1.5))
 
 (test-group "Test geometric"
+            (reset-source!)
             (define (expected-fraction p x)
               (* (expt (- 1 p) (- x 1)) p))
 
@@ -382,6 +407,7 @@
             (test-geom (make-geometric-generator 0.5) 0.5))
 
 (test-group "Test uniform sampling"
+            (reset-source!)
             (test-equal
               '()
               (generator->list (gsampling)))
@@ -404,29 +430,35 @@
 
 ; See zipf-test.scm
 (test-group "Test Zipf sampling"
+            (reset-source!)
             (include "zipf-test.scm")
             (zipf-test-group))
 
 (test-group "Test sphere"
             (include "sphere-test.scm")
+            (reset-source!*)
             (test-sphere (make-sphere-generator 1) (vector 1.0 1.0) 200 #t)
             (test-sphere (make-sphere-generator 2) (vector 1.0 1.0 1.0) 200 #t)
             (test-sphere (make-sphere-generator 3) (vector 1.0 1.0 1.0 1.0) 200 #t)
-            
+
+            (reset-source!*)
             (test-sphere (make-sphere-generator (vector 1.0 1.0)) (vector 1.0 1.0) 200 #t)
             (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0)) (vector 1.0 1.0 1.0) 200 #t)
             (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0 1.0)) (vector 1.0 1.0 1.0 1.0) 200 #t)
-            
+
+            (reset-source!*)
             (test-sphere (make-sphere-generator (vector 1.0 3.0)) (vector 1.0 3.0) 200 #f)
             (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0) 200 #f)
             (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0 7.0)) (vector 1.0 3.0 5.0 7.0) 200 #f)
-            
+
+            (reset-source!*)
             (test-ball (make-ball-generator 2) (vector 1.0 1.0))
             (test-ball (make-ball-generator 3) (vector 1.0 1.0 1.0))
             (test-ball (make-ball-generator (vector 1.0 3.0)) (vector 1.0 3.0))
             (test-ball (make-ball-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0)))
 
 (test-group "Test binomial"
+            (reset-source!)
             (define (factorial n)
               (if (<= n 1)
                   1
@@ -436,14 +468,14 @@
                  (* (factorial k) (factorial (- n k)))))
             (define (expected-frac n p k)
               (* (C n k) (expt p k) (expt (- 1 p) (- n k))))
-            
+
             (define (test-binomial n p count)
               (define g (make-binomial-generator n p))
               (define counts (make-vector (+ n 1) 0))
               (generator-for-each
-                  (lambda (x)
-                    (vector-set! counts x (+ 1 (vector-ref counts x))))
-                  (gtake g count))
+                (lambda (x)
+                  (vector-set! counts x (+ 1 (vector-ref counts x))))
+                (gtake g count))
               (for-each
                 (lambda (k)
                   (define expected (* count (expected-frac n p k) ))
@@ -452,10 +484,10 @@
                     ((= expected 0)
                      (test-equal 0 actual))
                     ;;hacky.. testing values with very low probability fails
-                    ((> expected (* 1/10000 count))  
-                     (test-approximate 1.0 (/ actual expected) 0.1))))
+                    ((> expected (* 1/1000 count))  
+                     (test-approximate 1.0 (/ actual expected) 0.2))))
                 (iota (+ n 1))))
-            
+
             (test-binomial 1 0 100)
             (test-binomial 1 1 100)
             (test-binomial 1 0. 100)

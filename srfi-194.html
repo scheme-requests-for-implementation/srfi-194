@@ -79,12 +79,10 @@ Use <code>parameterize</code> to specify a block of code
 in which a different SRFI 27 random source is used.
 Parameterizing does not affect the behavior of existing generators.</dd>
 
-<dt id="with_random_source"><code>(with-random-source</code><var> random-source proc arg ...</var><code>)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[syntax]</dt>
+<dt id="with_random_source"><code>(with-random-source</code><var> random-source thunk</var><code>)</code></dt>
 
 <dd><p>Binds <code>current-random-source</code> to <var>random-source</var>
-and then applies <var>proc</var> to <var>args</var>.
-This is shorthand for calling a single procedure in this SRFI
-    with a different random source.</dd>
+and then invokes <var>thunk</var> in tail position.</dd>
 
 <dt id="random-source-generator"><code>(random-source-generator<var> stream</var>)</code></dt>
 
@@ -208,10 +206,10 @@ and 0 with probability 1 - <var>p</var>.
 <dt id="index-categorical"><code>(make-categorical-generator</code><var> pvec</var><code>)</code></dt>
 <dd><p>Creates a generator that yields
 an exact integer <var>n</var> between 0 (inclusive)
-and the length of <var>pvec</var> (exclusive)
-with probability equal to the <var>n</var>th element of <var>pvec</var>.
+and the length of <var>pvec</var> (inclusive)
+with probability equal to the <var>n</var>th element of <var>pvec</var> when n is less than length of pvec, and 1 minus sum of pvec when n is equal to length of pvec. In other words, probabilities are supplied to all but last element, for which the probability is implicit.
 It is an error if the sum of the elements of <var>pvec</var>
-is not equal to 1 (in the sense of <code>=</code>).
+is greater than 1.
 </p></dd>
 
 <dt id="index-reals_002dnormal_0024"><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>
@@ -251,6 +249,33 @@ are real -10 &lt; <var>s</var> &lt; 100 and
 real -0.5 &lt; <var>q</var> &lt; 2e8 and
 integer 1 &le; <var>k</var>.
 </p></dd></dl>
+
+<dl>
+    <dt id="index-reals_sphere"><code>(make-sphere-generator <var>dimensions</var>)</code></dt>
+    <dd>
+        Creates a generator that yields (n + 1) length vectors of real numbers corresponding to be on the surface of a n-sphere.
+        <var>dimensions</var> can be either a vector of (n + 1) real numbers, in which case they define sphere stretching across
+        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied.
+    </dd>
+</dl>
+
+<dl>
+    <dt id="index-reals_sphere"><code>(make-sphere-generator <var>dimensions</var>)</code></dt>
+    <dd>
+        Creates a generator that yields (n + 1) length vectors of real numbers corresponding to be on the surface of a n-sphere.
+        <var>dimensions</var> can be either a vector of (n + 1) real numbers, in which case they define sphere stretching across
+        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (ie radius of sphere is 1).
+    </dd>
+</dl>
+
+<dl>
+    <dt id="index-reals_ball"><code>(make-ball-generator <var>dimensions</var>)</code></dt>
+    <dd>
+        Creates a generator that yields n length vectors of real numbers corresponding to be insde of a n-ball.
+        <var>dimensions</var> can be either a vector of n real numbers, in which case they define ball stretching across
+        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (ie radius of ball is 1).
+    </dd>
+</dl>
 
 <h3 id="Generator-operations" class="subheading">Generator operations</h3>
 

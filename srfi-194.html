@@ -218,7 +218,11 @@ and 0 with probability 1 - <var>p</var>.
 <dd><p>Creates a generator that yields
 an exact integer <var>n</var> between 0 (inclusive)
 and the length of <var>pvec</var> (inclusive)
-with probability equal to the <var>n</var>th element of <var>pvec</var> when n is less than length of pvec, and 1 minus sum of pvec when n is equal to length of pvec. In other words, probabilities are supplied to all but last element, for which the probability is implicit.
+with probability equal to the <var>n</var>th element of <var>pvec</var>
+when n is less than length of <var>pvec</var>, and 1 minus sum of
+<var>pvec</var> when n is equal to the length of <var>pvec</var>.
+In other words, probabilities are supplied for all but last element,
+for which the probability is implicit.
 It is an error if the sum of the elements of <var>pvec</var>
 is greater than 1.
 </p></dd>

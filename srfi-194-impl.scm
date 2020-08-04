@@ -14,18 +14,22 @@
 ;; SRFI 27 stream of random numbers.  See Sections 1.2 and
 ;; 1.3 of "An object-oriented random-number package with many
 ;; long streams and substreams", by Pierre L'Ecuyer, Richard
-;; Simard, E. Jack Chen, and W. David Kelton, Operatios Research,
+;; Simard, E. Jack Chen, and W. David Kelton, Operations Research,
 ;; vol. 50 (2002), pages 1073-1075.
 ;; https://doi.org/10.1287/opre.50.6.1073.358
 ;;
 
 (define (random-source-generator s)
-  (let ((substream 0))
-    (lambda ()
-      (let ((new-source (make-random-source))) ;; deterministic
-        (random-source-pseudo-randomize! new-source s substream)
-        (set! substream (+ substream 1))
-        new-source)))) 
+  (if (not (and (exact? s)
+                (integer? s)
+                (not (negative? s))))
+      (error "random-source-generator: Expect nonnegative exact integer argument: " s)
+      (let ((substream 0))
+        (lambda ()
+          (let ((new-source (make-random-source))) ;; deterministic
+            (random-source-pseudo-randomize! new-source s substream)
+            (set! substream (+ substream 1))
+            new-source)))))
 
 ;;
 ;; Primitive randoms
@@ -63,15 +67,15 @@
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
 (define (clamp-real-number lower-bound upper-bound value)
-  (unless (real? lower-bound)
-    (error "expected real number for lower bound"))
-  (unless (real? upper-bound)
-    (error "expected real number for upper bound"))
-  (cond
-    ((> lower-bound upper-bound) (error "clamp lower bound cannot be bigger than upper bound"))
-    ((< value lower-bound) lower-bound)
-    ((> value upper-bound) upper-bound)
-    (else value)))
+  (cond ((not (real? lower-bound))
+         (error "expected real number for lower bound"))
+        ((not (real? upper-bound))
+         (error "expected real number for upper bound"))
+        ((not (<= lower-bound upper-bound))
+         (error "lower bound must be <= upper bound"))
+        ((< value lower-bound) lower-bound)
+        ((> value upper-bound) upper-bound)
+        (else value)))
 
 (define (make-random-real-generator low-bound up-bound)
   (unless (and (real? low-bound)
@@ -79,7 +83,9 @@
     (error "expected finite real number for lower bound"))
   (unless (and (real? up-bound)
                (finite? up-bound))
-    (error "expected finite real number for upper bound"))
+     (error "expected finite real number for upper bound"))
+  (unless (<= low-bound up-bound)
+     (error "lower bound must be <= upper bound"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (define t (rand-real-proc))
@@ -123,7 +129,7 @@
 (define (make-bernoulli-generator p)
   (unless (real? p)
     (error "expected p to be real"))
-  (when (or (< p 0) (> p 1))
+  (unless (<= 0 p 1)
     (error "expected 0 <= p <= 1"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
@@ -177,11 +183,13 @@
     ((mean deviation)
      (let ((rand-real-proc (random-source-make-reals (current-random-source)))
            (state #f))
-       (unless (real? mean)
-         (error "expected mean to be real number"))
+       (unless (and (real? mean)
+                    (finite? mean))
+         (error "expected mean to be finite real number"))
        (unless (and (real? deviation)
+                    (finite? deviation)
                     (> deviation 0))
-         (error "expected deviation to be positive real number"))
+         (error "expected deviation to be positive finite real number"))
        (lambda ()
          (if state
              (let ((result state))
@@ -194,21 +202,36 @@
 
 (define (make-exponential-generator mean)
   (unless (and (real? mean)
-               (finite? mean))
-    (error "expected mean to be finite real number"))
+               (finite? mean)
+               (positive? mean))
+    (error "expected mean to be finite positive real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (- (* mean (log (rand-real-proc)))))))
 
 (define (make-geometric-generator p)
+  
+  (define (log1p x)
+    ;; Adapted from SRFI 144
+    (let ((u (+ 1.0 x)))
+      (cond ((= u 1.0)
+             x) ;; gets sign of zero result correct
+            ((= u x)
+             (log u)) ;; large arguments and infinities
+            (else
+             (* (log u) (/ x (- u 1.0)))))))
+  
   (unless (and (real? p)
-               (>= p 0)
+               (> p 0)
                (<= p 1))
-    (error "expected p to be real number, 0 <= p <= 1"))
-  (let ((c (/ (log (- 1.0 p))))
-        (rand-real-proc (random-source-make-reals (current-random-source))))
-    (lambda ()
-      (exact (ceiling (* c (log (rand-real-proc))))))))
+          (error "expected p to be real number, 0 < p <= 1"))
+  (if (zero? (- p 1.))
+      ;; p is indistinguishable from 1.
+      (lambda () 1)
+      (let ((c (/ (log1p (- p))))
+            (rand-real-proc (random-source-make-reals (current-random-source))))
+        (lambda ()
+          (exact (ceiling (* c (log (rand-real-proc)))))))))
 
 ;; Draw from poisson distribution with mean L, variance L.
 ;; For small L, we use Knuth's method.  For larger L, we use rejection
@@ -222,10 +245,11 @@
 ;; is recalculated multiple times)
 (define (make-poisson-generator L)
   (unless (and (real? L)
+               (finite? L)
                (> L 0))
-    (error "expected L to be positive real number"))
+    (error "expected L to be finite positive real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
-   (if (< L 36)
+   (if (< L 30)
        (make-poisson/small rand-real-proc L)
        (make-poisson/large rand-real-proc L))))
 

@@ -84,11 +84,6 @@ Parameterizing does not affect the behavior of existing generators.</dd>
 <dd><p>Binds <code>current-random-source</code> to <var>random-source</var>
 and then invokes <var>thunk</var> in tail position.</dd>
 
-<dt id="random-source-generator"><code>(random-source-generator<var> stream</var>)</code></dt>
-
-<dd><p> A generator that returns random sources for consecutive substreams of the specified SRFI 27 <code><var>stream</var></code> of random numbers.</dd>
-</dl>
-
 <dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
 <dd><p>Returns a generator of random sources.
 Each invocation of the generator returns the random source

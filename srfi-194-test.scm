@@ -134,7 +134,7 @@
                         '(4 9 7 9 0)))
                 (apply test-multiple-sources multiple-sources-testcase))))
 
-(test-group "Test random-source-generator"
+(test-group "Test make-random-source-generator"
             (reset-source!)
             (define (make-numbers src-gen)
               (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
@@ -145,11 +145,11 @@
                   (gtake gen2 10))))
 
             (test-equal
-              (make-numbers (random-source-generator 0))
-              (make-numbers (random-source-generator 0)))
+              (make-numbers (make-random-source-generator 0))
+              (make-numbers (make-random-source-generator 0)))
             (test-assert
-              (not (equal? (make-numbers (random-source-generator 0))
-                           (make-numbers (random-source-generator 1))))))
+              (not (equal? (make-numbers (make-random-source-generator 0))
+                           (make-numbers (make-random-source-generator 1))))))
 (test-group "Test random int"
             (reset-source!)
             (assert-number-generator

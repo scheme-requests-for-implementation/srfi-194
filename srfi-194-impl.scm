@@ -19,7 +19,7 @@
 ;; https://doi.org/10.1287/opre.50.6.1073.358
 ;;
 
-(define (random-source-generator s)
+(define (make-random-source-generator s)
   (let ((substream 0))
     (lambda ()
       (let ((new-source (make-random-source))) ;; deterministic

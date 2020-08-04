@@ -1,26 +1,43 @@
 ;;
-;; Parameters & syntax
+;; Parameters
 ;;
 (define current-random-source (make-parameter default-random-source))
 
-(define-syntax with-random-source
-  (syntax-rules ()
-    ((_ random-source proc arg ...)
-     (begin
-       (unless (random-source? random-source)
-         (error "expected random source"))
-       (parameterize ((current-random-source random-source))
-                     (proc arg ...))))))
+(define (with-random-source random-source thunk)
+  (unless (random-source? random-source)
+    (error "expected random source"))
+  (parameterize ((current-random-source random-source))
+                (thunk)))
+
+;;
+;; Carefully return consecutive substreams of the s'th
+;; SRFI 27 stream of random numbers.  See Sections 1.2 and
+;; 1.3 of "An object-oriented random-number package with many
+;; long streams and substreams", by Pierre L'Ecuyer, Richard
+;; Simard, E. Jack Chen, and W. David Kelton, Operatios Research,
+;; vol. 50 (2002), pages 1073-1075.
+;; https://doi.org/10.1287/opre.50.6.1073.358
+;;
+
+(define (random-source-generator s)
+  (let ((substream 0))
+    (lambda ()
+      (let ((new-source (make-random-source))) ;; deterministic
+        (random-source-pseudo-randomize! new-source s substream)
+        (set! substream (+ substream 1))
+        new-source)))) 
 
 ;;
 ;; Primitive randoms
 ;;
 
 (define (make-random-integer-generator low-bound up-bound)
-  (when (not (integer? low-bound))
-    (error "expected integer"))
-  (when (not (integer? up-bound))
-    (error "expected integer"))
+  (unless (and (integer? low-bound)
+               (exact? low-bound))
+    (error "expected exact integer for lower bound"))
+  (unless (and (integer? up-bound)
+               (exact? up-bound))
+    (error "expected exact integer for upper bound"))
   (let ((rand-int-proc (random-source-make-integers (current-random-source)))
         (range (- up-bound low-bound)))
     (lambda ()
@@ -46,6 +63,10 @@
   (make-random-integer-generator (- (expt 2 63)) (expt 2 63)))
 
 (define (clamp-real-number lower-bound upper-bound value)
+  (unless (real? lower-bound)
+    (error "expected real number for lower bound"))
+  (unless (real? upper-bound)
+    (error "expected real number for upper bound"))
   (cond
     ((> lower-bound upper-bound) (error "clamp lower bound cannot be bigger than upper bound"))
     ((< value lower-bound) lower-bound)
@@ -53,18 +74,20 @@
     (else value)))
 
 (define (make-random-real-generator low-bound up-bound)
-  (when (not (number? low-bound))
-    (error "expected number"))
-  (when (not (number? up-bound))
-    (error "expected number"))
+  (unless (and (real? low-bound)
+               (finite? low-bound))
+    (error "expected finite real number for lower bound"))
+  (unless (and (real? up-bound)
+               (finite? up-bound))
+    (error "expected finite real number for upper bound"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
-    (lambda ()
-      (define t (rand-real-proc))
-      ;; alternative way of doing lowbound + t * (up-bound - low-bound)
-      ;; is susceptible to rounding errors and would require clamping to be safe
-      ;; (which in turn requires 144 for adjacent float function)
-      (+ (* t low-bound)
-         (* (- 1.0 t) up-bound)))))
+   (lambda ()
+     (define t (rand-real-proc))
+     ;; alternative way of doing lowbound + t * (up-bound - low-bound)
+     ;; is susceptible to rounding errors and would require clamping to be safe
+     ;; (which in turn requires 144 for adjacent float function)
+     (+ (* t low-bound)
+        (* (- 1.0 t) up-bound)))))
 
 (define (make-random-complex-generator real-lower-bound imag-lower-bound
                                        real-upper-bound imag-upper-bound)
@@ -98,14 +121,18 @@
 (define PI (* 4 (atan 1.0)))
 
 (define (make-bernoulli-generator p)
+  (unless (real? p)
+    (error "expected p to be real"))
   (when (or (< p 0) (> p 1))
     (error "expected 0 <= p <= 1"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (if (<= (rand-real-proc) p)
-         0
-         1))))
+         1
+         0))))
 
+;; note, pvec has 1 less length than the amount of categories.
+;; last category has implicit probability of 1 minus the rest
 (define (make-categorical-generator pvec)
   (define prob-sum
     (vector-fold
@@ -116,14 +143,18 @@
         (+ sum p))
       0
       pvec))
-  (unless (= prob-sum 1)
-    (error "sum of given probabilities must be equal to 1"))
+  (define length (vector-length pvec))
+  (unless (<= prob-sum 1)
+    (error "sum of given probabilities mustn't be greater than 1"))
   (let ((real-gen (make-random-real-generator 0 1)))
    (lambda ()
      (define roll (real-gen))
      (let it ((sum 0)
               (i 0))
-       (if (< roll (+ sum (vector-ref pvec i)))
+       (if (or
+             ;; not matching of any elements in the vector -- return implicit last one
+             (>= i length)
+             (< roll (+ sum (vector-ref pvec i))))
            i
            (it (+ sum (vector-ref pvec i))
                (+ i 1)))))))
@@ -146,6 +177,11 @@
     ((mean deviation)
      (let ((rand-real-proc (random-source-make-reals (current-random-source)))
            (state #f))
+       (unless (real? mean)
+         (error "expected mean to be real number"))
+       (unless (and (real? deviation)
+                    (> deviation 0))
+         (error "expected deviation to be positive real number"))
        (lambda ()
          (if state
              (let ((result state))
@@ -157,15 +193,22 @@
                (+ mean (* deviation r (sin theta))))))))))
 
 (define (make-exponential-generator mean)
+  (unless (and (real? mean)
+               (finite? mean))
+    (error "expected mean to be finite real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (- (* mean (log (rand-real-proc)))))))
 
 (define (make-geometric-generator p)
+  (unless (and (real? p)
+               (>= p 0)
+               (<= p 1))
+    (error "expected p to be real number, 0 <= p <= 1"))
   (let ((c (/ (log (- 1.0 p))))
         (rand-real-proc (random-source-make-reals (current-random-source))))
     (lambda ()
-      (ceiling (* c (log (rand-real-proc)))))))
+      (exact (ceiling (* c (log (rand-real-proc))))))))
 
 ;; Draw from poisson distribution with mean L, variance L.
 ;; For small L, we use Knuth's method.  For larger L, we use rejection
@@ -178,6 +221,9 @@
 ;; and therefore is not entirely thread safe (should still produce correct result, but with performance hit if table
 ;; is recalculated multiple times)
 (define (make-poisson-generator L)
+  (unless (and (real? L)
+               (> L 0))
+    (error "expected L to be positive real number"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (if (< L 36)
        (make-poisson/small rand-real-proc L)
@@ -284,3 +330,159 @@
           (pick)))))
 
 
+;;; Code for binomial random variable generation.
+
+;;; binomial-geometric is somewhat classical, the
+;;; "First waiting time algorithm" from page 525 of
+;;; Devroye, L. (1986), Non-Uniform Random Variate
+;;; Generation, Springer-Verlag, New York.
+
+;;; binomial-rejection is algorithm BTRS from
+;;; Hormann, W. (1993), The generation of binomial
+;;; random variates, Journal of Statistical Computation
+;;; and Simulation, 46:1-2, 101-110,
+;;; DOI: https://doi.org/10.1080/00949659308811496
+;;; stirling-tail is also from that paper.
+
+;;; Another implementation of the same algorithm is at
+;;; https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/kernels/random_binomial_op.cc
+;;; That implementation pointed out at least two bugs in the
+;;; BTRS paper.
+
+(define (stirling-tail k)
+  ;; Computes
+  ;;
+  ;; \log(k!)-[\log(\sqrt{2\pi})+(k+\frac12)\log(k+1)-(k+1)]
+  ;;
+  (let ((small-k-table
+         ;; Computed using computable reals package
+         ;; Matches values in paper, which are given
+         ;; for 0\leq k < 10
+         '#(.08106146679532726
+            .0413406959554093
+            .02767792568499834
+            .020790672103765093
+            .016644691189821193
+            .013876128823070748
+            .01189670994589177
+            .010411265261972096
+            .009255462182712733
+            .00833056343336287
+            .007573675487951841
+            .00694284010720953
+            .006408994188004207
+            .0059513701127588475
+            .005554733551962801
+            .0052076559196096404
+            .004901395948434738
+            .004629153749334028
+            .004385560249232324
+            .004166319691996922)))
+    (if (< k 20)
+        (vector-ref small-k-table k)
+        ;; the correction term (+ (/ (* 12 (+ k 1))) ...)
+        ;; in Stirling's approximation to log(k!)
+        (let* ((inexact-k+1 (inexact (+ k 1)))
+               (inexact-k+1^2 (square inexact-k+1)))
+          (/ (- #i1/12
+                (/ (- #i1/360
+                      (/ #i1/1260 inexact-k+1^2))
+                   inexact-k+1^2))
+             inexact-k+1)))))
+
+(define (make-binomial-generator n p)
+  (if (not (and (real? p)
+                (<= 0 p 1)
+                (exact-integer? n)
+                (positive? n)))
+       (error "make-binomial-generator: Bad parameters: " n p)
+       (cond ((< 1/2 p)
+              (let ((complement (make-binomial-generator n (- 1 p))))
+                (lambda ()
+                  (- n (complement)))))
+             ((zero? p)
+              (lambda () 0))
+             ((< (* n p) 10)
+              (binomial-geometric n p))
+             (else
+              (binomial-rejection n p)))))
+      
+(define (binomial-geometric n p)
+  (let ((geom (make-geometric-generator p)))
+    (lambda ()
+      (let loop ((X -1)
+                 (sum 0))
+        (if (< n sum)
+            X
+            (loop (+ X 1)
+                  (+ sum (geom))))))))
+
+(define (binomial-rejection n p)
+  ;; call when p <= 1/2 and np >= 10
+  ;; Use notation from the paper
+  (let* ((spq
+          (inexact (sqrt (* n p (- 1 p)))))
+         (b
+          (+ 1.15 (* 2.53 spq)))
+         (a
+          (+ -0.0873
+             (* 0.0248 b)
+             (* 0.01 p)))
+         (c
+          (+ (* n p) 0.5))
+         (v_r
+          (- 0.92
+             (/ 4.2 b)))
+         (alpha
+          ;; The formula in BTRS has 1.5 instead of 5.1;
+          ;; The formula for alpha in algorithm BTRD and Table 1
+          ;; and the tensorflow code uses 5.1, so we use 5.1
+          (* (+ 2.83 (/ 5.1 b)) spq))
+         (lpq
+          (log (/ p (- 1 p))))
+         (m
+          (exact (floor (* (+ n 1) p))))
+         (rand-real-proc
+          (random-source-make-reals (current-random-source))))
+    (lambda ()
+      (let loop ((u (rand-real-proc))
+                 (v (rand-real-proc)))
+        (let* ((u
+                (- u 0.5))
+               (us
+                (- 0.5 (abs u)))
+               (k
+                (exact
+                 (floor
+                  (+ (* (+ (* 2. (/ a us)) b) u) c)))))
+          (cond ((or (< k 0)
+                     (< n k))
+                 (loop (random-real)
+                       (random-real)))
+                ((and (<= 0.07 us)
+                      (<= v v_r))
+                 k)
+                (else
+                 (let ((v
+                        ;; The tensorflow code notes that BTRS doesn't have
+                        ;; this logarithm; BTRS is incorrect (see BTRD, step 3.2)
+                        (log (* v (/ alpha
+                                     (+ (/ a (square us)) b))))))
+                   (if (<=  v 
+                            (+ (* (+ m 0.5)
+                                  (log (* (/ (+ m 1.)
+                                             (- n m -1.)))))
+                               (* (+ n 1.)
+                                  (log (/ (- n m -1.)
+                                          (- n k -1.))))
+                               (* (+ k 0.5)
+                                  (log (* (/ (- n k -1.)
+                                             (+ k 1.)))))
+                               (* (- k m) lpq)
+                               (- (+ (stirling-tail m)
+                                     (stirling-tail (- n m)))
+                                  (+ (stirling-tail k)
+                                     (stirling-tail (- n k))))))
+                       k
+                       (loop (random-real)
+                             (random-real)))))))))))

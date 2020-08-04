@@ -84,11 +84,22 @@ Parameterizing does not affect the behavior of existing generators.</dd>
 <dd><p>Binds <code>current-random-source</code> to <var>random-source</var>
 and then invokes <var>thunk</var> in tail position.</dd>
 
-<dt id="random-source-generator"><code>(random-source-generator<var> stream</var>)</code></dt>
-
-<dd><p> A generator that returns random sources for consecutive substreams of the specified SRFI 27 <code><var>stream</var></code> of random numbers.</dd>
-</dl>
-
+<dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
+<dd><p>Returns a generator of random sources.
+Each invocation of the generator returns the random source
+returned by passing the value of <code>(csurrent-random-source)</code>,
+<var>i</var>, and successive integers <var>j</var>
+(starting with 0) to the SRFI 27 procedure
+<code>random-source-pseudo-randomize!</code>.</p>
+<p>The random sources are guaranteed to be distinct as long as
+<var>i</var> and <var>j</var> are not too large
+and the generator is not called too many times.
+What counts as "too large/many" depends on the SRFI 27 implementation;
+the sample implementation works correctly
+if <var>i</var> &lt; 2<sup>63</sup> and <var>j</var> &lt; 2<sup>51</sup>
+and no more than 2<sup>76</sup> values are generated.
+</p>
+</dd></dl>
 <h3 id="Uniform-distributions" class="subheading">Uniform distributions</h3>
 
 <p>These generators generate uniformly distributed values

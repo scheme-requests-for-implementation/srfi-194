@@ -41,7 +41,7 @@
     make-sphere-generator
     make-ball-generator
 
-    random-source-generator
+    make-random-source-generator
     gsampling)
 
   (include "srfi-194-impl.scm")

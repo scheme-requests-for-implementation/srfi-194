@@ -19,11 +19,11 @@
 ;; https://doi.org/10.1287/opre.50.6.1073.358
 ;;
 
-(define (random-source-generator s)
+(define (make-random-source-generator s)
   (if (not (and (exact? s)
                 (integer? s)
                 (not (negative? s))))
-      (error "random-source-generator: Expect nonnegative exact integer argument: " s)
+      (error "make-random-source-generator: Expect nonnegative exact integer argument: " s)
       (let ((substream 0))
         (lambda ()
           (let ((new-source (make-random-source))) ;; deterministic

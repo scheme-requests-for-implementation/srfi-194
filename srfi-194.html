@@ -185,6 +185,7 @@ and whose imaginary part is between
 
 <dt id="index-chars_0024"><code>(make-random-char-generator</code><var> string</var><code>)</code></dt>
 <dd><p>Returns a generator that generates characters in <var>string</var> uniformly.
+Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
 </p>
 <table><tr><td>&nbsp;</td>
 <td><pre class="example">
@@ -199,7 +200,8 @@ and whose imaginary part is between
 <dt id="index-chars_0024b"><code>(make-random-string-generator</code><var> k string<code>)</code></var></dt>
 <dd><p>Returns a generator that generates random strings whose characters are in <var>string</var>.
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
-The strings are all less than <var>k</var> characters in length.
+The length of the strings is uniformly distributed between 0 (inclusive) and
+the length of <var>string</var> (exclusive).
 </p>
 </dd></dl>
 

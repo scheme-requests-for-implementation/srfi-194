@@ -1,5 +1,5 @@
 ; Take REPS samples from unit sphere, verify random distribution.
-; 
+;
 ; This test checks that:
 ; * Every sample has unit length, within numerical tolerance.
 ; * The REPS samples are uniformly distributed.
@@ -14,10 +14,10 @@
     (generator->list (gtake sphereg REPS)))
 
   (define (l2-norm VEC)
-    (sqrt (vector-fold 
+    (sqrt (vector-fold
             (lambda (sum x l) (+ sum (/ (* x x)
-                                        (* l l)))) 
-            0 
+                                        (* l l))))
+            0
             VEC
             dim-sizes)))
 
@@ -37,21 +37,21 @@
            (iota (vector-length VEC)))))
 
   ; Apply a random rotation to a collection of vectors
-  (define how-many-rots 
+  (define how-many-rots
     (if (< 10 N) 10 N))
-  
+
   (define (arb-rot VEC-LIST)
     (define j (random-int N))
     (define k (+ j 1 (random-int (- N j))))
     (define theta (* 3.14 (random-real)))
     (define co (cos theta))
     (define si (sin theta))
-    (define rvl 
-      (map (lambda (vec) 
-             (pair-rot vec j k co si)) 
+    (define rvl
+      (map (lambda (vec)
+             (pair-rot vec j k co si))
            VEC-LIST))
-    (if (not (= 0 (random-int how-many-rots))) 
-        (arb-rot rvl) 
+    (if (not (= 0 (random-int how-many-rots)))
+        (arb-rot rvl)
         rvl))
 
   ; Expect a vector approaching zero. That is, each individual
@@ -60,12 +60,12 @@
   ; converge to zero, within pi/2 sqrt(REPS).
   (define (converge-to-zero samples)
     (fold (lambda (acc sample) (vector-map + sample acc))
-          (make-vector REPS 0.0) 
+          (make-vector REPS 0.0)
           samples))
 
-  (define (should-be-zero samples) 
+  (define (should-be-zero samples)
     (l2-norm (converge-to-zero samples)))
-  
+
   (define (norm-should-be-zero samples)
     (/ (should-be-zero samples) (* 1.57 (sqrt REPS))))
 
@@ -78,7 +78,7 @@
 
   ; Each individual sphere radius should be 1.0 to within float
   ; tolerance.
-  (for-each 
+  (for-each
     (lambda (SAMP)
       (test-approximate 1.0 (l2-norm SAMP) EPS))
     samples)
@@ -94,13 +94,13 @@
 
 (define (test-ball ballg dim-sizes)
   (define (l2-norm VEC)
-    (sqrt (vector-fold 
+    (sqrt (vector-fold
             (lambda (sum x l) (+ sum (/ (* x x)
-                                        (* l l)))) 
-            0 
+                                        (* l l))))
+            0
             VEC
             dim-sizes)))
-  
+
   (define (test-ball-generates-on-radius radius err)
     (test-assert
       (generator-any
@@ -109,11 +109,11 @@
           (and (> n (- radius err))
                (< n (+ radius err))))
         (gtake ballg 10000))))
-  
+
   (define (test-ball-avg-zero N)
     (define vec-sum
       (generator-fold
-        (lambda (vec acc) 
+        (lambda (vec acc)
           (vector-map + vec acc))
         (make-vector (vector-length dim-sizes) 0.0)
         (gtake ballg N)))
@@ -124,9 +124,9 @@
         vec-sum))
     (define n (l2-norm avg-vec))
     (test-assert (< n 1)))
-  
+
   (test-ball-generates-on-radius 0.0 0.1)
   (test-ball-generates-on-radius 0.5 0.1)
   (test-ball-generates-on-radius 1.0 0.1)
-  
+
   (test-ball-avg-zero 5000))

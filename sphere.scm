@@ -26,12 +26,12 @@
       dim-sizes))
   ; Banach l2-norm aka root-mean-square distance.
   (define (l2-norm VEC)
-    (sqrt (vector-fold 
-            (lambda (sum x l) 
+    (sqrt (vector-fold
+            (lambda (sum x l)
               (+ sum (/ (* x x)
                         (* l l)
-                        ))) 
-            0 
+                        )))
+            0
             VEC
             dim-sizes)))
 
@@ -42,8 +42,8 @@
           (gaussg))
         gaussg-vec))
     (define norm (/ 1.0 (l2-norm vect)))
-    (vector-map (lambda (x) 
-                  (* x norm)) 
+    (vector-map (lambda (x)
+                  (* x norm))
                 vect)))
 
 ; make-ball-generator N - return a generator of points uniformly
@@ -59,7 +59,7 @@
   (define sphereg (make-sphere-generator (+ N 2)))
   ; Create a vector of N+2 values, and drop the last two.
   ; (The sphere already added one, so we only add one more)
-  (lambda () 
+  (lambda ()
     (vector-map
       (lambda (el dim-size _) (* el dim-size))
       (sphereg)

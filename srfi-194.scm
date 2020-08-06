@@ -37,7 +37,7 @@
     make-exponential-generator
     make-geometric-generator
     make-poisson-generator
-    make-zipf-generator 
+    make-zipf-generator
     make-sphere-generator
     make-ball-generator
 

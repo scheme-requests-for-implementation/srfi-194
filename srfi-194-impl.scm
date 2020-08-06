@@ -210,7 +210,7 @@
      (- (* mean (log (rand-real-proc)))))))
 
 (define (make-geometric-generator p)
-  
+
   (define (log1p x)
     ;; Adapted from SRFI 144
     (let ((u (+ 1.0 x)))
@@ -220,7 +220,7 @@
              (log u)) ;; large arguments and infinities
             (else
              (* (log u) (/ x (- u 1.0)))))))
-  
+
   (unless (and (real? p)
                (> p 0)
                (<= p 1))
@@ -430,7 +430,7 @@
               (binomial-geometric n p))
              (else
               (binomial-rejection n p)))))
-      
+
 (define (binomial-geometric n p)
   (let ((geom (make-geometric-generator p)))
     (lambda ()
@@ -492,7 +492,7 @@
                         ;; this logarithm; BTRS is incorrect (see BTRD, step 3.2)
                         (log (* v (/ alpha
                                      (+ (/ a (square us)) b))))))
-                   (if (<=  v 
+                   (if (<=  v
                             (+ (* (+ m 0.5)
                                   (log (* (/ (+ m 1.)
                                              (- n m -1.)))))

@@ -88,7 +88,7 @@ and then invokes <var>thunk</var> in tail position.</dd>
 <dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
 <dd><p>Returns a generator of random sources.
 Each invocation of the generator returns the random source
-returned by passing the value of <code>(csurrent-random-source)</code>,
+returned by passing the value of <code>(current-random-source)</code>,
 <var>i</var>, and successive integers <var>j</var>
 (starting with 0) to the SRFI 27 procedure
 <code>random-source-pseudo-randomize!</code>.</p>
@@ -271,18 +271,18 @@ integer 1 &le; <var>k</var>.
 <dl>
     <dt id="index-reals_sphere"><code>(make-sphere-generator <var>dimensions</var>)</code></dt>
     <dd>
-        Creates a generator that yields (n + 1) length vectors of real numbers corresponding to be on the surface of a n-sphere.
-        <var>dimensions</var> can be either a vector of (n + 1) real numbers, in which case they define sphere stretching across
-        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (ie radius of sphere is 1).
+        Creates a generator that yields (n + 1)-length vectors of real numbers corresponding the surface of an n-sphere.
+        <var>dimensions</var> can be either a vector of (n + 1) real numbers, in which case they define a sphere stretching across
+        the major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (i.e. the radius of the sphere is 1).
     </dd>
 </dl>
 
 <dl>
     <dt id="index-reals_ball"><code>(make-ball-generator <var>dimensions</var>)</code></dt>
     <dd>
-        Creates a generator that yields n length vectors of real numbers corresponding to be insde of a n-ball.
-        <var>dimensions</var> can be either a vector of n real numbers, in which case they define ball stretching across
-        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (ie radius of ball is 1).
+        Creates a generator that yields n-length vectors of real numbers corresponding to the inside of an n-ball.
+        <var>dimensions</var> can be either a vector of n real numbers, in which case they define a ball stretching across the
+        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (i.e. the radius of the ball is 1).
     </dd>
 </dl>
 

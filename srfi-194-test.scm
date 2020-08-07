@@ -1,7 +1,6 @@
 ;; NOTE: for zipf tests data can be exported, this can be enabled by uncommenting appropriate lines.
 
 (import
-  (srfi-194)
   (scheme base)
   (scheme inexact)
   (scheme complex)
@@ -10,7 +9,8 @@
   (scheme write)
   (srfi 1)
   (srfi 27)
-  (srfi 133))
+  (srfi 133)
+  (srfi 194))
 
 (cond-expand
   ((library (srfi 158)) (import (srfi 158)))
@@ -58,6 +58,7 @@
         (and (>= num from)
              (< num lower-quarter)))
       (gtake gen 1000)))
+  
   (test-assert
     (generator-any
       (lambda (num)

@@ -133,7 +133,7 @@
 
   ; Lower and upper bounds for the uniform random generator.
   (define big-h-half (- (big-h 1.5) (hat 1)))
-  
+
   (define big-h-n (big-h (+ n 0.5)))
 
   ; Rejection cut

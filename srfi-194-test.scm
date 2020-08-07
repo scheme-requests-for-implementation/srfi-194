@@ -1,4 +1,4 @@
-;; NOTE: for zipf tests data can be exported, this can be enabled by uncommenting appropriate lines. 
+;; NOTE: for zipf tests data can be exported, this can be enabled by uncommenting appropriate lines.
 
 (import
   (scheme base)
@@ -17,7 +17,7 @@
   ((library (srfi 121)) (import (srfi 121))))
 
 (cond-expand
-  (chibi (begin 
+  (chibi (begin
            (import (except (chibi test) test-equal))
            (define-syntax test-equal
              (syntax-rules ()
@@ -29,10 +29,10 @@
                                   (>= value (- target max-delta)))))))))
   (else (import (srfi 64))))
 
-;; syntax just we can plop it at top and still allow internal `define`s 
+;; syntax just we can plop it at top and still allow internal `define`s
 (define-syntax reset-source!
   (syntax-rules ()
-    ((_) 
+    ((_)
      (define _ (random-source-pseudo-randomize! (current-random-source) 0 0)))))
 
 (define (reset-source!*)
@@ -135,7 +135,7 @@
                         '(4 9 7 9 0)))
                 (apply test-multiple-sources multiple-sources-testcase))))
 
-(test-group "Test random-source-generator"
+(test-group "Test make-random-source-generator"
             (reset-source!)
             (define (make-numbers src-gen)
               (define gen1 (with-random-source (src-gen) (lambda () (make-random-integer-generator 0 100))))
@@ -146,11 +146,11 @@
                   (gtake gen2 10))))
 
             (test-equal
-              (make-numbers (random-source-generator 0))
-              (make-numbers (random-source-generator 0)))
+              (make-numbers (make-random-source-generator 0))
+              (make-numbers (make-random-source-generator 0)))
             (test-assert
-              (not (equal? (make-numbers (random-source-generator 0))
-                           (make-numbers (random-source-generator 1))))))
+              (not (equal? (make-numbers (make-random-source-generator 0))
+                           (make-numbers (make-random-source-generator 1))))))
 (test-group "Test random int"
             (reset-source!)
             (assert-number-generator
@@ -481,11 +481,11 @@
                 (lambda (k)
                   (define expected (* count (expected-frac n p k) ))
                   (define actual (vector-ref counts k))
-                  (cond 
+                  (cond
                     ((= expected 0)
                      (test-equal 0 actual))
                     ;;hacky.. testing values with very low probability fails
-                    ((> expected (* 1/1000 count))  
+                    ((> expected (* 1/1000 count))
                      (test-approximate 1.0 (/ actual expected) 0.2))))
                 (iota (+ n 1))))
 

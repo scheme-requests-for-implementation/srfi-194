@@ -11,7 +11,7 @@
 (define (vector-to-file vec filename)
   (define (write-vec)
     (for-each
-      (lambda (i) 
+      (lambda (i)
         (define index (+ i 1))
         (define val (vector-ref vec i))
         (display index)
@@ -50,7 +50,7 @@
          (vector-set! bin-counts offset (+ 1 (vector-ref bin-counts offset))))
        (gtake (ZGEN NVOCAB ESS QUE) REPS))
      bin-counts))
-  
+
 
   ; Verify the distribution is within tolerance.
   ; This is written out long-hand for easier debuggability.
@@ -87,7 +87,7 @@
   ; and with undersampling; so we hack around that.
   (define err-dist
     (if (< 10 QUE) diff
-        (vector-map (lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS)))) 
+        (vector-map (lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS))))
                     (list->vector (iota (vector-length diff)))
                     diff)))
 
@@ -117,7 +117,7 @@
 
   ; Test for uniform convergence.
   (test-assert (<= l0-norm TOL))
-  
+
   ; Should not random walk too far away.
   ; Could tighten this with a proper theory of the error distribution.
   (test-assert (< (abs mean) 3))

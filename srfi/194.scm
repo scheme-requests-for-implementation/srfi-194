@@ -37,11 +37,11 @@
     make-exponential-generator
     make-geometric-generator
     make-poisson-generator
-    make-zipf-generator 
+    make-zipf-generator
     make-sphere-generator
     make-ball-generator
 
-    random-source-generator
+    make-random-source-generator
     gsampling)
 
   (include "srfi-194-impl.scm")

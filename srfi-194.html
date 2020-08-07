@@ -22,6 +22,7 @@
   <li>60-day deadline: 2020-07-03</li>
   <li>Draft #1 published: 2020-05-14</li>
   <li>Draft #2 published: 2020-06-16</li>
+  <li>Draft #3 published: 2020-08-06</li>
 </ul>
 
 <h2>Abstract</h2>
@@ -84,11 +85,22 @@ Parameterizing does not affect the behavior of existing generators.</dd>
 <dd><p>Binds <code>current-random-source</code> to <var>random-source</var>
 and then invokes <var>thunk</var> in tail position.</dd>
 
-<dt id="random-source-generator"><code>(random-source-generator<var> stream</var>)</code></dt>
-
-<dd><p> A generator that returns random sources for consecutive substreams of the specified SRFI 27 <code><var>stream</var></code> of random numbers.</dd>
-</dl>
-
+<dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
+<dd><p>Returns a generator of random sources.
+Each invocation of the generator returns the random source
+returned by passing the value of <code>(csurrent-random-source)</code>,
+<var>i</var>, and successive integers <var>j</var>
+(starting with 0) to the SRFI 27 procedure
+<code>random-source-pseudo-randomize!</code>.</p>
+<p>The random sources are guaranteed to be distinct as long as
+<var>i</var> and <var>j</var> are not too large
+and the generator is not called too many times.
+What counts as "too large/many" depends on the SRFI 27 implementation;
+the sample implementation works correctly
+if <var>i</var> &lt; 2<sup>63</sup> and <var>j</var> &lt; 2<sup>51</sup>
+and no more than 2<sup>76</sup> values are generated.
+</p>
+</dd></dl>
 <h3 id="Uniform-distributions" class="subheading">Uniform distributions</h3>
 
 <p>These generators generate uniformly distributed values
@@ -124,7 +136,7 @@ some concrete data from the generators.
 1-bit unsigned and
 8, 16, 32, and 64-bit signed and unsigned integers.
 These values can be stored in the corresponding
-<a href="http://srfi.schemers.org/srfi-160/srfi-160.html">SRFI 160</a>
+<a href="https://srfi.schemers.org/srfi-160/srfi-160.html">SRFI 160</a>
 homogeneous vectors.</p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(generator-&gt;list (make-random-s8-generator) 10)
  &rArr; (20 -101 50 -99 -111 -28 -19 -61 39 110)
@@ -147,7 +159,7 @@ The procedure returns reals between
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 
 (generator-&gt;list uniform-100 10)
- &rArr; (81.67965004942268 81.84927577572596 53.02443813660833) ; cannot generate 0 or 100
+ &rArr; (81.67965004942268 81.84927577572596 53.02443813660833)
 </pre></td></tr></table>
 
 <table><tr><td>&nbsp;</td><td><pre class="example">(define generate-from-0-below-1
@@ -174,6 +186,7 @@ and whose imaginary part is between
 
 <dt id="index-chars_0024"><code>(make-random-char-generator</code><var> string</var><code>)</code></dt>
 <dd><p>Returns a generator that generates characters in <var>string</var> uniformly.
+Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
 </p>
 <table><tr><td>&nbsp;</td>
 <td><pre class="example">
@@ -188,7 +201,8 @@ and whose imaginary part is between
 <dt id="index-chars_0024b"><code>(make-random-string-generator</code><var> k string<code>)</code></var></dt>
 <dd><p>Returns a generator that generates random strings whose characters are in <var>string</var>.
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
-The strings are all less than <var>k</var> characters in length.
+The length of the strings is uniformly distributed between 0 (inclusive) and
+the length of <var>string</var> (exclusive).
 </p>
 </dd></dl>
 
@@ -207,7 +221,11 @@ and 0 with probability 1 - <var>p</var>.
 <dd><p>Creates a generator that yields
 an exact integer <var>n</var> between 0 (inclusive)
 and the length of <var>pvec</var> (inclusive)
-with probability equal to the <var>n</var>th element of <var>pvec</var> when n is less than length of pvec, and 1 minus sum of pvec when n is equal to length of pvec. In other words, probabilities are supplied to all but last element, for which the probability is implicit.
+with probability equal to the <var>n</var>th element of <var>pvec</var>
+when n is less than length of <var>pvec</var>, and 1 minus sum of
+<var>pvec</var> when n is equal to the length of <var>pvec</var>.
+In other words, probabilities are supplied for all but last element,
+for which the probability is implicit.
 It is an error if the sum of the elements of <var>pvec</var>
 is greater than 1.
 </p></dd>
@@ -299,13 +317,18 @@ is the same.  John Cowan made those and other revisions, and then
 put the SRFI on the back burner until he got around to implementing
 it.  Arvydas Silanskas began by asking why the next R7RS-large
 ballot was so delayed, and ended up volunteering to write code for
-the parts already specified.  This is his first such implementation,
+the parts already specified.  This SRFI is his first such implementation,
 and in the process of writing it he found a number of errors in the specification
 as well, which John was very glad to be told about.</p>
 
+<p>During the SRFI review process,
+the following additional generators were added:
+the binomial and random-source generators written by Brad Lucier,
+and the Zipf, sphere, and ball generators written by Linas Vepstas.</p>
+
 <p>Thanks also to the Scheme community and especially the contributors
 to the SRFI 194 mailing list, including
-Shiro Kawai, Bradley Lucier, and Marc Nieper-Wißkirchen.</p>
+Shiro Kawai and Marc Nieper-Wißkirchen.</p>
 
 <h2>Copyright</h2>
 

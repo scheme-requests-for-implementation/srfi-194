@@ -22,7 +22,7 @@
   (define gaussg-vec
     (vector-map
       (lambda (size)
-        (make-normal-generator 0.0 (sqrt size)))
+        (make-normal-generator 0.0 size))
       dim-sizes))
   ; Banach l2-norm aka root-mean-square distance.
   (define (l2-norm VEC)

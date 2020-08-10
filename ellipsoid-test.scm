@@ -161,6 +161,9 @@
 ;	(test-assert (< 1.03 rms))
 )
 
+; ------------------------------------------------------
+; OK, now test some ellipses.
+
 (define (sample gen)
 	(map (lambda (x) (gen)) (iota 10000)))
 
@@ -173,3 +176,80 @@
 (verify-ellipse (sample (make-ellipsoid-generator '#(9 44))))
 (verify-ellipse (sample (make-ellipsoid-generator '#(9e3 4.4e3))))
 (verify-ellipse (sample (make-ellipsoid-generator '#(9e6 4.4e6))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(0.03 0.16))))
+
+; ------------------------------------------------------
+; Now test higher-dimensional ellipsoids.
+; This is done by slicing ellipses out of them. The slicing is
+; approximate.
+
+; Take a two-2d slice out of ellipsoid having `axes`. Thickness of the
+; slice is `thickness`. Location of the slice is `where`.  Caution:
+; may be extremely slow if a high-dimenional vector is given, or if
+; thickness is too thin. Will infinite-loop if `where` is not inside
+; the ellipsiod.  Returns an n-dimensional point, of which the first
+; two coords are unconstrained.
+;
+; Usage:
+;
+; (define gen (make-slicer '#(2 10 6 4) 0.1  '#(0 0 2 1)))
+; (gen)
+(define (make-slicer axes thickness where)
+
+	; Generator of points on n-dimensional ellipsoid
+	(define elli (make-ellipsoid-generator axes))
+
+	; return true if point is in the slice.
+	(define (accept point)
+
+		;; Take the slice off-center
+		(define diff
+			(vector-map (lambda (idx r s) (- r s)) point where))
+
+		;; Return #t if the point is in the slice
+		(define (ok vec)
+			(vector-fold (lambda (idx pass coord)
+				(or (< idx 2)
+					(and pass (< (- 0 thickness) coord) (< coord thickness))))
+				#t vec))
+
+		; Test
+		(ok diff))
+
+	; Keep trying until we have a point in the slice.
+	(define (try)
+		(define sample (elli))
+		(if (accept sample) sample (try)))
+
+	; Return the looper
+	try)
+
+; Like above but drops all but the first two coordinates
+(define (two-d-slicer axes thickness where)
+	(define sli (make-slicer axes thickness where))
+
+	(lambda ()
+		(define sample (sli))
+		(vector (vector-ref sample 0) (vector-ref sample 1))))
+
+(define (sample-1K gen)
+	(map (lambda (x) (gen)) (iota 1000)))
+
+; ------------------------------------------------------
+; The higher-dimensional tests..
+
+; These tests don't work very well, aren't very stable.
+; The slice has to be really thin, otherwise one gets junky
+; samples which don't pass unit tests. But thin slices take a huge
+; amount of CPU time to run...
+(verify-ellipse (sample-1K (two-d-slicer '#(2 8 10) 0.02 '#(0 0 0))))
+
+(verify-ellipse (sample-1K (two-d-slicer '#(6 8 8) 0.04 '#(0 0 0))))
+(verify-ellipse (sample-1K (two-d-slicer '#(6 8 12) 0.04 '#(0 0 0))))
+(verify-ellipse (sample-1K (two-d-slicer '#(2 8 10) 0.04 '#(0 0 0))))
+
+; This takes too long to run
+; (verify-ellipse (sample-1K (two-d-slicer '#(5 8 10 7) 0.04 '#(0 0 0 0))))
+
+; --------------------- the end ------------------------
+; ------------------------------------------------------

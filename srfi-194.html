@@ -269,11 +269,25 @@ integer 1 &le; <var>k</var>.
 </p></dd></dl>
 
 <dl>
-    <dt id="index-reals_sphere"><code>(make-sphere-generator <var>dimensions</var>)</code></dt>
+    <dt id="index-reals_sphere"><code>(make-sphere-generator <var>n</var>)</code></dt>
     <dd>
-        Creates a generator that yields (n + 1) length vectors of real numbers corresponding to be on the surface of a n-sphere.
-        <var>dimensions</var> can be either a vector of (n + 1) real numbers, in which case they define sphere stretching across
-        major axis, or it can be an integer, in which case it's treated as n, and no stretching is applied (ie radius of sphere is 1).
+        Creates a generator that yields vectors of dimension
+        (<var>n</var> + 1) of real numbers that are randomly,
+        independently distributed on the surface of a
+        <var>n</var>-sphere. That is, the vectors are of unit length.
+    </dd>
+</dl>
+
+<dl>
+    <dt id="index-reals_sphere"><code>(make-ellipsoid-generator <var>axes</var>)</code></dt>
+    <dd>
+        Creates a generator that yields vectors of dimension (n + 1)
+        of real numbers that are randomly, independently distributed
+        on the surface of a n-ellipsoid.  The ellipsoid is specified
+        by the <var>axes</var> argument, which must be a vector of
+        real numbers. Given axes = (a,b, ...), then the generated
+        vectors v=(x,y, ...) obey 1 = x<sup>2</sup>/a<sup>2</sup>
+        + y<sup>2</sup>/b<sup>2</sup> + ... .
     </dd>
 </dl>
 

@@ -155,10 +155,10 @@
 	(format #t "RMS error: ~A\n" rms)
 	(newline)
 
-;	(test-assert (< error 12))
-;	(test-assert (< 0 error))
-;	(test-assert (< 0.97 rms))
-;	(test-assert (< 1.03 rms))
+	(test-assert (< error 12))
+	(test-assert (< 0 error))
+	(test-assert (< 0.97 rms))
+	(test-assert (< 1.03 rms))
 )
 
 ; ------------------------------------------------------

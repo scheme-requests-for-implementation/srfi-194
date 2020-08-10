@@ -1,7 +1,7 @@
-; 
+;
 ; ellipsoid-test.scm
 ;
-; Verify that the diistribution of points on the surface of an
+; Verify that the distribution of points on the surface of an
 ; ellipsoid is uniform.
 ;
 ; Test proceeds by taking 2-D slices through the ellipsoid, and
@@ -37,10 +37,53 @@
 
 ; Newton differences - compute the difference between neighboring
 ; points. Assumes `pts` is a list of vectors.  Should be called with
-; `rv` set to the null list. (tail-recursive helper) 
+; `rv` set to the null list. (tail-recursive helper)
 (define (delta pts rv)
    (if (null? (cdr pts)) (reverse! rv)
       (delta (cdr pts) (cons (vector-diff (car pts) (cadr pts)) rv))))
+
+; Compute sum of a list of numbers
+(define (sum lst) (fold (lambda (x sum) (+ sum x)) 0 lst))
+
+; -----------------------------------------------------------
+; Stuff for the complete elliptic integral
+(define pi 3.14159265358979)
+
+; factorial
+(define (fact n rv)
+   (if (zero? n) rv (fact (- n 1) (* n rv))))
+
+; Double factorial
+; https://en.wikipedia.org/wiki/Double_factorial
+(define (double-fact n rv)
+   (if (<= n 0) rv (double-fact (- n 2) (* n rv))))
+
+; Complete elliptic integral per wikipedia, see the Ivorty& Bessel
+; expansion. Here `a` and `b` are the axes.
+; https://en.wikipedia.org/wiki/Ellipse
+(define (complete-elliptic a b)
+   (define rh (/ (- a b) (+ a b)))
+   (define h (* rh rh))
+
+	(define precision 1e-10)
+
+   (define (ivory term n twon hn fact-n dfact-n sum)
+      (if (< term precision) (+ sum term)
+         ; (format #t "yo n= ~A term=~A 2^n=~A h^n=~A n!=~A n!!=~A sum=~A\n"
+         ; n term twon hn fact-n dfact-n sum)
+         (ivory
+            (/ (* dfact-n dfact-n hn) (* twon twon fact-n fact-n))
+            (+ n 1)
+            (* 2 twon)
+            (* h hn)
+            (* (+ n 1) fact-n)
+            (* (- (* 2 n) 1) dfact-n)
+            (+ term sum))))
+
+   (* pi (+ a b) (+ 1 (/ h 4)
+      (ivory (/ (* h h) 64) 3 8 (* h h h) 6 3 0.0))))
+
+; -----------------------------------------------------------
 
 ; Assumes that `points` is a list of 2D vectors of floats.
 (define (verify-ellipse points)
@@ -53,3 +96,37 @@
 	; Compute the distances between neighboring points
 	(define dists (map l2-norm diffs))
 
+	; Sum of the intervals
+	(define perimeter (sum dists))
+
+	; The smaller of two coords.
+	(define (least PNT)
+		(define x (abs (vector-ref PNT 0)))
+		(define y (abs (vector-ref PNT 1)))
+		(if (< x y) x y))
+
+	; The greater of two coords.
+	(define (greatest PNT)
+		(define x (abs (vector-ref PNT 0)))
+		(define y (abs (vector-ref PNT 1)))
+		(if (< x y) y x))
+
+	; Find major and minor axes
+	(define major
+		(fold (lambda (MAJ P)
+			(if (< MAJ (greatest P)) (greatest P)  MAJ))
+			points))
+	(define minor
+		(fold (lambda (MIN P)
+			(if (< MIN (least P)) (least P)  MIN))
+			points))
+
+	; The expected perimiter
+	(define perim-exact (complete-elliptic major minor))
+
+	; The normalized difference of measured and expected perimeters
+	(define error
+		(abs (* (/ (- perimeter perim-exact) perim-exact) (length points))))
+
+	(format #t "Got ~A\n" error)
+)

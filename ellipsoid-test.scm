@@ -45,6 +45,14 @@
 ; Compute sum of a list of numbers
 (define (sum lst) (fold (lambda (x sum) (+ sum x)) 0 lst))
 
+; Compute sum of squares of a list of numbers
+(define (sumsq lst) (fold (lambda (x sum) (+ sum (* x x))) 0 lst))
+
+(define (mean lst) (/ (sum lst) (length lst)))
+(define (stddev lst)
+	(define avg (mean lst))
+	(sqrt (- (/ (sumsq lst) (length lst)) (* avg avg))))
+
 ; -----------------------------------------------------------
 ; Stuff for the complete elliptic integral
 (define pi 3.14159265358979)
@@ -85,7 +93,17 @@
 
 ; -----------------------------------------------------------
 
+; Test that a list of points are well-distributed on an ellipse.
 ; Assumes that `points` is a list of 2D vectors of floats.
+;
+; Multiple tests are performed:
+; 1) This sums the differences between points, i.e. measures the
+;    perimeter, and verifies that the perimiter is as pexpected,
+;    given by the complete elliptic integral.
+; 2) Computes the RMS variation between the points, and verifies
+;    that this is small.
+; 3) (non-automated) dump differences to file and verify they look good.
+;
 (define (verify-ellipse points)
 	; Place in sorted order.
 	(define ordered-points (clockwise points))
@@ -96,7 +114,8 @@
 	; Compute the distances between neighboring points
 	(define dists (map l2-norm diffs))
 
-	; Sum of the intervals
+	; Sum of the intervals ... NOT including distance between
+	; the very last and the very first points.
 	(define perimeter (sum dists))
 
 	; Find major and minor axes
@@ -117,12 +136,40 @@
 
 	; The normalized difference of measured and expected perimeters
 	; Should almost always be less than ten, often less than two.
+	; It should usually be positive, because we failed to count the
+	; distance between the last and first point... and also an
+	; O(delta^2) error cause this is Newton integration.
 	(define error
-		(abs (* (/ (- perimeter perim-exact) perim-exact) (length points))))
+		(abs (* (/ (- perim-exact perimeter) perim-exact) (length dists))))
+
+	; If The points are normally eistributed, then the `dists` should
+	; form a normal gaussian distribution, with unit stadndard
+	; devviation. i.e. rms below should be near 1.0
+	(define rms (/ (* (stddev dists) (length dists)) perim-exact))
 
 	(format #t "Number of points: ~A\n" (length points))
 	(format #t "Measured perimeter: ~A\n" perimeter)
 	(format #t "Major and minor axes: ~A ~A\n" major minor)
 	(format #t "Expected perimeter: ~A\n" perim-exact)
 	(format #t "Relative error: ~A\n" error)
+	(format #t "RMS error: ~A\n" rms)
+	(newline)
+
+;	(test-assert (< error 12))
+;	(test-assert (< 0 error))
+;	(test-assert (< 0.97 rms))
+;	(test-assert (< 1.03 rms))
 )
+
+(define (sample gen)
+	(map (lambda (x) (gen)) (iota 10000)))
+
+(verify-ellipse (sample (make-ellipsoid-generator '#(2 10))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(2 10))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(2 10))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(2 10))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(10 2))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(3 8))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(9 44))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(9e3 4.4e3))))
+(verify-ellipse (sample (make-ellipsoid-generator '#(9e6 4.4e6))))

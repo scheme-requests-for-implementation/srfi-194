@@ -45,7 +45,7 @@
   ; Banach l2-norm of a vector
   (define (l2-norm VEC)
     (sqrt (vector-fold
-            (lambda (idx sum x) (+ sum (* x x)))
+            (lambda (sum x) (+ sum (* x x)))
             0
             VEC)))
 
@@ -53,22 +53,22 @@
   (define (sph)
     ; Sample a point
     (define point
-      (vector-map (lambda (idx gaussg) (gaussg)) gaussg-vec))
+      (vector-map (lambda (gaussg) (gaussg)) gaussg-vec))
     ; Project it to the unit sphere (make it unit length)
     (define norm (/ 1.0 (l2-norm point)))
-    (vector-map (lambda (idx x) (* x norm)) point))
+    (vector-map (lambda (x) (* x norm)) point))
 
   ; Distance from origin to the surface of the
   ; ellipsoid along direction RAY.
   (define (ellipsoid-dist RAY)
     (sqrt (vector-fold
-            (lambda (idx sum x a) (+ sum (/ (* x x) (* a a))))
+            (lambda (sum x a) (+ sum (/ (* x x) (* a a))))
             0 RAY axes)))
 
   ; Find the shortest axis.
   (define minor
     (vector-fold
-        (lambda (idx mino l) (if (< l mino) l mino))
+        (lambda (mino l) (if (< l mino) l mino))
         1e308 axes))
 
   ; Uniform generator [0,1)
@@ -87,7 +87,7 @@
   (lambda ()
   ; Find a good point, and rescale to ellipsoid.
     (vector-map
-         (lambda (idx x a) (* x a)) (sample) axes))
+         (lambda (x a) (* x a)) (sample) axes))
 )
 
 ; -----------------------------------------------

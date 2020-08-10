@@ -33,7 +33,7 @@
 ; Vector subtraction
 ; Example usage: (vector-diff '#( 2 3) '#(0.5 0.7))
 (define (vector-sub a b)
-	(vector-map (lambda (idx ea eb) (- ea eb)) a b))
+	(vector-map (lambda (ea eb) (- ea eb)) a b))
 
 ; Newton differences - compute the difference between neighboring
 ; points. Assumes `pts` is a list of vectors.  Should be called with
@@ -204,14 +204,14 @@
 
 		;; Take the slice off-center
 		(define diff
-			(vector-map (lambda (idx r s) (- r s)) point where))
+			(vector-map (lambda (r s) (- r s)) point where))
 
 		;; Return #t if the point is in the slice
 		(define (ok vec)
-			(vector-fold (lambda (idx pass coord)
+			(vector-fold (lambda (pass coord idx)
 				(or (< idx 2)
 					(and pass (< (- 0 thickness) coord) (< coord thickness))))
-				#t vec))
+				#t vec (iota (vector-length vec)) ))
 
 		; Test
 		(ok diff))

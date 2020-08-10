@@ -162,6 +162,46 @@
 )
 
 ; ------------------------------------------------------
+;
+; Bonus points: uncomment the below, write results to a file
+; and view the graph.  It should look sane.
+; This is commented out because it is for reference nly,
+; and does not need to be ported.
+;
+;;;(define (explore-ellipse points)
+;;;	; Place in sorted order.
+;;;	(define ordered-points (clockwise points))
+;;;
+;;;	; Difference between neghboring points.
+;;;	(define diffs (delta ordered-points '()))
+;;;
+;;;	; Compute the distances between neighboring points
+;;;	(define dists (map l2-norm diffs))
+;;;
+;;;	; Compute moving average
+;;;	(define (moving-avg lst window)
+;;;		(map (lambda (offset) (avg (take (drop lst offset) window)))
+;;;			(iota (- (length lst) window))))
+;;;
+;;;	; Window 300 points wide. The moving average should do a
+;;;   ; random walk around an average value of ellipsoid-perimeter
+;;;   ; divided by the number of points. The walk should be normally
+;;;	; distributed.  Should be translation-invariant; there should
+;;;	; be no sine waves.
+;;;	(define moving-300 (moving-avg dists 300))
+;;;
+;;;	(define (list-to-file lst filename)
+;;;	(let ((outport (open-file filename "w")))
+;;;		(fold
+;;;			(lambda (x i) (format outport "~A	~A\n" i x) (+ i 1))
+;;;			1
+;;;			lst)
+;;;		(close outport)))
+;;;
+;;;	(list-to-file moving-300 "moving.dat")
+;;;)
+
+; ------------------------------------------------------
 ; OK, now test some ellipses.
 
 (define (sample gen)

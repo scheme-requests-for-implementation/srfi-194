@@ -99,34 +99,30 @@
 	; Sum of the intervals
 	(define perimeter (sum dists))
 
-	; The smaller of two coords.
-	(define (least PNT)
-		(define x (abs (vector-ref PNT 0)))
-		(define y (abs (vector-ref PNT 1)))
-		(if (< x y) x y))
-
-	; The greater of two coords.
-	(define (greatest PNT)
-		(define x (abs (vector-ref PNT 0)))
-		(define y (abs (vector-ref PNT 1)))
-		(if (< x y) y x))
-
 	; Find major and minor axes
 	(define major
-		(fold (lambda (MAJ P)
-			(if (< MAJ (greatest P)) (greatest P)  MAJ))
-			points))
+		(fold (lambda (MAJ x)
+			(if (< MAJ x) x MAJ))
+			0
+			(map l2-norm points)))
+
 	(define minor
-		(fold (lambda (MIN P)
-			(if (< MIN (least P)) (least P)  MIN))
-			points))
+		(fold (lambda (MIN x)
+			(if (< MIN x) MIN x))
+			1.0e308
+			(map l2-norm points)))
 
 	; The expected perimiter
 	(define perim-exact (complete-elliptic major minor))
 
 	; The normalized difference of measured and expected perimeters
+	; Should almost always be less than ten, often less than two.
 	(define error
 		(abs (* (/ (- perimeter perim-exact) perim-exact) (length points))))
 
-	(format #t "Got ~A\n" error)
+	(format #t "Number of points: ~A\n" (length points))
+	(format #t "Measured perimeter: ~A\n" perimeter)
+	(format #t "Major and minor axes: ~A ~A\n" major minor)
+	(format #t "Expected perimeter: ~A\n" perim-exact)
+	(format #t "Relative error: ~A\n" error)
 )

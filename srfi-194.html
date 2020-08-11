@@ -12,7 +12,8 @@
 
 <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI logo" /></a>194: Random data generators</h1>
 
-<p>by Shiro Kawai (design), Arvydas Silanskas (implementation), John Cowan (editor and shepherd)</p>
+<p>by Shiro Kawai (design), Arvydas Silanskas (implementation),
+Linas Vepštas (implementation) John Cowan (editor and shepherd)</p>
 
 <h2>Status</h2>
 
@@ -76,9 +77,12 @@ output stream.</p>
 for all the procedures in this SRFI.
 Its initial value is <code>default-random-source</code>
 from SRFI 27.
-Use <code>parameterize</code> to specify a block of code
-in which a different SRFI 27 random source is used.
-Parameterizing does not affect the behavior of existing generators.</dd>
+Use <code>parameterize</code> to specify a dynamic scope
+in which a different SRFI 27 random source is used
+when creating new generators.
+The behavior of existing generators is
+not affected by changes to this parameter.
+</p>
 
 <dt id="with_random_source"><code>(with-random-source</code><var> random-source thunk</var><code>)</code></dt>
 
@@ -155,6 +159,8 @@ but will produce strange results with a mixture of the two.
 floats within the stated range uniformly.)
 The procedure returns reals between
 <var>lower-bound</var> and <var>upper-bound</var>, both inclusive.
+The similar procedure <code>random-real</code> in SRFI 27
+uses the exclusive bounds 0.0 and 1.0.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 

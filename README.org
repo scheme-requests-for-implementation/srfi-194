@@ -1,6 +1,6 @@
 * SRFI 194: Random data generators
 
-** by Shiro Kawai (design), Arvydas Silanskas (implementation), and John Cowan (editor and shepherd)
+** by Shiro Kawai (design), Arvydas Silanskas (implementation), John Cowan (editor and shepherd), and Linas Vepštas (implementation)
 
 
 

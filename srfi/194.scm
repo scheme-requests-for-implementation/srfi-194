@@ -39,6 +39,7 @@
     make-poisson-generator
     make-zipf-generator
     make-sphere-generator
+    make-ellipsoid-generator
     make-ball-generator
 
     make-random-source-generator

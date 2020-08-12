@@ -44,6 +44,6 @@
     make-random-source-generator
     gsampling)
 
-  (include "srfi-194-impl.scm")
+  (include "194-impl.scm")
   (include "zipf-zri.scm")
   (include "sphere.scm"))

@@ -7,45 +7,90 @@
 ; http://extremelearning.com.au/how-to-generate-uniformly-random-points-on-n-spheres-and-n-balls/
 ;
 
-
 ; make-sphere-generator N - return a generator of points uniformly
 ; distributed on an N-dimensional sphere.
 ; This implements the BoxMeuller algorithm, that is, of normalizing
 ; N+1 Gaussian random variables.
 (define (make-sphere-generator arg)
   (cond
-    ((integer? arg) (make-sphere-generator* (make-vector (+ 1 arg) 1.0)))
-    ((vector? arg) (make-sphere-generator* arg))
-    (else (error "expected argument to either be a number (dimension), or vector (axis length for the dimensions)"))))
+    ((integer? arg) (make-ellipsoid-generator* (make-vector (+ 1 arg) 1.0)))
+    (else (error "expected argument to be an integer dimension"))))
 
-(define (make-sphere-generator* dim-sizes)
+(define (make-ellipsoid-generator arg)
+  (cond
+    ((vector? arg) (make-ellipsoid-generator* arg))
+    (else (error "expected argument to be a vector of axis lengths"))))
+
+; -----------------------------------------------
+; Generator of points uniformly distributed on an N-dimensional ellipsoid.
+;
+; The `axes` should be a vector of floats, specifying the axes of the
+; ellipsoid. The algorithm used is an accept/reject sampling algo,
+; wherein the acceptance rate is proportional to the measure of a
+; surface element on the ellipsoid. The measure is straight-forward to
+; arrive at, and the 3D case is described by `mercio` in detail at
+; https://math.stackexchange.com/questions/973101/how-to-generate-points-uniformly-distributed-on-the-surface-of-an-ellipsoid
+;
+; Note that sampling means that performance goes as
+; O(B/A x C/A x D/A x ...) where `A` is the shorest axis,
+; and `B`, `C`, `D`, ... are the other axes. Maximum performance
+; achieved on spheres.
+;
+(define (make-ellipsoid-generator* axes)
+
+  ; A vector of normal gaussian generators
   (define gaussg-vec
-    (vector-map
-      (lambda (size)
-        (make-normal-generator 0.0 (sqrt size)))
-      dim-sizes))
-  ; Banach l2-norm aka root-mean-square distance.
+    (make-vector (vector-length axes) (make-normal-generator 0 1)))
+
+  ; Banach l2-norm of a vector
   (define (l2-norm VEC)
     (sqrt (vector-fold
-            (lambda (sum x l)
-              (+ sum (/ (* x x)
-                        (* l l)
-                        )))
+            (lambda (sum x) (+ sum (* x x)))
             0
-            VEC
-            dim-sizes)))
+            VEC)))
+
+  ; Generate one point on a sphere
+  (define (sph)
+    ; Sample a point
+    (define point
+      (vector-map (lambda (gaussg) (gaussg)) gaussg-vec))
+    ; Project it to the unit sphere (make it unit length)
+    (define norm (/ 1.0 (l2-norm point)))
+    (vector-map (lambda (x) (* x norm)) point))
+
+  ; Distance from origin to the surface of the
+  ; ellipsoid along direction RAY.
+  (define (ellipsoid-dist RAY)
+    (sqrt (vector-fold
+            (lambda (sum x a) (+ sum (/ (* x x) (* a a))))
+            0 RAY axes)))
+
+  ; Find the shortest axis.
+  (define minor
+    (vector-fold
+        (lambda (mino l) (if (< l mino) l mino))
+        1e308 axes))
+
+  ; Uniform generator [0,1)
+  (define uni (make-uniform-generator))
+
+  ; Return #t if the POINT can be kept; else must resample.
+  (define (keep POINT)
+    (< (uni) (* minor (ellipsoid-dist POINT))))
+
+  ; Sample until a good point is found. The returned sample is a
+  ; vector of unit length (we already normed up above).
+  (define (sample)
+    (define vect (sph))
+    (if (keep vect) vect (sample)))
 
   (lambda ()
-    (define vect
-      (vector-map
-        (lambda (gaussg)
-          (gaussg))
-        gaussg-vec))
-    (define norm (/ 1.0 (l2-norm vect)))
-    (vector-map (lambda (x)
-                  (* x norm))
-                vect)))
+  ; Find a good point, and rescale to ellipsoid.
+    (vector-map
+         (lambda (x a) (* x a)) (sample) axes))
+)
 
+; -----------------------------------------------
 ; make-ball-generator N - return a generator of points uniformly
 ; distributed inside an N-dimensional ball.
 ; This implements the Harman-Lacko-Voelker Dropped Coordinate method.

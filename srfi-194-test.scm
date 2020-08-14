@@ -443,14 +443,14 @@
             (test-sphere (make-sphere-generator 3) (vector 1.0 1.0 1.0 1.0) 200 #t)
 
             (reset-source!*)
-            (test-sphere (make-sphere-generator (vector 1.0 1.0)) (vector 1.0 1.0) 200 #t)
-            (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0)) (vector 1.0 1.0 1.0) 200 #t)
-            (test-sphere (make-sphere-generator (vector 1.0 1.0 1.0 1.0)) (vector 1.0 1.0 1.0 1.0) 200 #t)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 1.0)) (vector 1.0 1.0) 200 #t)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 1.0 1.0)) (vector 1.0 1.0 1.0) 200 #t)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 1.0 1.0 1.0)) (vector 1.0 1.0 1.0 1.0) 200 #t)
 
             (reset-source!*)
-            (test-sphere (make-sphere-generator (vector 1.0 3.0)) (vector 1.0 3.0) 200 #f)
-            (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0) 200 #f)
-            (test-sphere (make-sphere-generator (vector 1.0 3.0 5.0 7.0)) (vector 1.0 3.0 5.0 7.0) 200 #f)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 3.0)) (vector 1.0 3.0) 200 #f)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 3.0 5.0)) (vector 1.0 3.0 5.0) 200 #f)
+            (test-sphere (make-ellipsoid-generator (vector 1.0 3.0 5.0 7.0)) (vector 1.0 3.0 5.0 7.0) 200 #f)
 
             (reset-source!*)
             (test-ball (make-ball-generator 2) (vector 1.0 1.0))

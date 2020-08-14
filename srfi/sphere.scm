@@ -72,7 +72,7 @@
         1e308 axes))
 
   ; Uniform generator [0,1)
-  (define uni (make-uniform-generator))
+  (define uni (make-random-real-generator 0.0 1.0))
 
   ; Return #t if the POINT can be kept; else must resample.
   (define (keep POINT)

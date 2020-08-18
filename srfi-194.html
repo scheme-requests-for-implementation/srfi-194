@@ -274,14 +274,15 @@ real -0.5 &lt; <var>q</var> &lt; 2e8 and
 integer 1 &le; <var>N</var> &le; <code>int-max</code>.
 </p></dd></dl>
 
-<p>The following three procedures generate points of <var>k</var>-dimensional Euclidean space.
+<p>The following three procedures generate points of real-valued <var>k</var>-dimensional Euclidean space.
 These points are modeled as Scheme vectors of length <var>k</var> of real numbers.</p>
 
 
 <dl>
     <dt id="index-reals_sphere"><code>(make-sphere-generator <var>n</var>)</code></dt>
     <dd>
-        Creates a generator that generates points in (<var>n</var> + 1)-dimensional Euclidean space
+        Creates a generator that generates points
+        in real-valued (<var>n</var> + 1)-dimensional Euclidean space
         that are randomly, independently distributed on the surface of a
         <var>n</var>-sphere. That is, the vectors are of unit length.
     </dd>
@@ -290,7 +291,8 @@ These points are modeled as Scheme vectors of length <var>k</var> of real number
 <dl>
     <dt id="index-reals_ellipsoid"><code>(make-ellipsoid-generator <var>axes</var>)</code></dt>
     <dd>
-        Creates a generator that generates points in (<var>n</var> + 1)-dimensional Euclidean space
+        Creates a generator that generates points
+        in real-valued (<var>n</var> + 1)-dimensional Euclidean space
         that are randomly, independently distributed
         on the surface of a <var>n</var>-ellipsoid.  The ellipsoid is specified
         by the <var>axes</var> argument, which must be a vector of
@@ -304,7 +306,8 @@ These points are modeled as Scheme vectors of length <var>k</var> of real number
 <dl>
     <dt id="index-reals_ball"><code>(make-ball-generator <var>dimensions</var>)</code></dt>
     <dd>
-        Creates a generator that generates points in <var>n</var>-dimensional Euclidean space
+        Creates a generator that generates points
+        in real-valued <var>n</var>-dimensional Euclidean space
         corresponding to the inside of a <var>n</var>-ball.
         The <var>dimensions</var> argument can be either a vector
         of <var>n</var> real numbers, in which case they are taken as the axes

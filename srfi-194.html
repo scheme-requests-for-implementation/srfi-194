@@ -228,8 +228,8 @@ and 0 with probability 1 - <var>p</var>.
 an exact integer <var>n</var> between 0 (inclusive)
 and the length of <var>pvec</var> (inclusive)
 with probability equal to the <var>n</var>th element of <var>pvec</var>
-when n is less than length of <var>pvec</var>, and 1 minus sum of
-<var>pvec</var> when n is equal to the length of <var>pvec</var>.
+when <var>n</var>is less than length of <var>pvec</var>, and 1 minus sum of
+<var>pvec</var> when <var>n</var>is equal to the length of <var>pvec</var>.
 In other words, probabilities are supplied for all but last element,
 for which the probability is implicit.
 It is an error if the sum of the elements of <var>pvec</var>
@@ -265,7 +265,7 @@ mean <var>L</var>, variance <var>L</var>.
 <dt id="index-integers_002dzipf_0024"><code>(make-zipf-generator</code><var>
 N [ s [ q ] ]</var><code>)</code></dt>
 <dd><p>Creates a generator that yields integers <var>k</var> from the
-generalized Zipf distribution <code>1/(k+q)<sup>s</sup></code> with (1 &le; k &le; <var>N</var>).
+generalized Zipf distribution 1<var>/(k+q)<sup>s</sup></var> with (1 &le; k &le; <var>N</var>).
 The default value of <var>s</var> is 1.0 and the default value of
 <var>q</var> is 0.0.  Parameters outside the valid range are likely
 to result in overflows or loss of precision.  Valid parameter ranges
@@ -275,7 +275,7 @@ integer 1 &le; <var>N</var> &le; <code>int-max</code>.
 </p></dd></dl>
 
 <p>The following three procedures generate points of real-valued <var>k</var>-dimensional Euclidean space.
-These points are modeled as Scheme vectors of length <var>k</var> of real numbers.</p>
+These points are modeled as Scheme vectors of real numbers of length <var>k</var>.</p>
 
 
 <dl>

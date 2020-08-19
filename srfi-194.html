@@ -116,6 +116,8 @@ some concrete data from the generators.
 <dt id="index-integers_002dbetween_0024"><code>(make-random-integer-generator</code><var> lower-bound  upper-bound</var><code>)</code></dt>
 <dd><p>Creates exact integer generators.  Creates a generator that generates integers between
 <var>lower-bound</var> (inclusive) and <var>upper-bound</var> (exclusive) uniformly.
+It is an error if the bounds are not exact integers
+or if the specified interval is empty.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">;; A die roller
 (define die (make-random-integer-generator 1 7))
@@ -152,6 +154,7 @@ homogeneous vectors.</p>
 <em>lower-bound</em> and <em>upper-bound</em>, inclusive.
 Note that this procedure works with either exact or inexact numbers,
 but will produce strange results with a mixture of the two.
+It is an error if the specified interval is empty.
 </dd>
 <dt id="index-reals_002dbetween_0024"><code>(make-random-real-generator</code><var> lower-bound upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact real numbers uniformly.
@@ -161,6 +164,7 @@ The procedure returns reals between
 <var>lower-bound</var> and <var>upper-bound</var>, both inclusive.
 The similar procedure <code>random-real</code> in SRFI 27
 uses the exclusive bounds 0.0 and 1.0.
+It is an error if the specified interval is empty.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 
@@ -173,12 +177,23 @@ uses the exclusive bounds 0.0 and 1.0.
 </pre></td></tr></table>
 </dd>
 
-<dt id="index-complexs_002dbetween_0024"><code>(make-random-complex-generator</code><var> real-lower-bound imag-lower-bound real-upper-bound imag-upper-bound</var><code>)</code></dt>
+<dt id="index-rectangular-complexs_002dbetween_0024"><code>(make-random-rectangular-complex-generator</code><var> real-lower-bound imag-lower-bound real-upper-bound imag-upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact complex numbers uniformly.
 The procedure returns complex numbers whose real part is between
 <var>real-lower-bound</var> and <var>real-upper-bound</var>, both inclusive,
 and whose imaginary part is between
 <var>imag-lower-bound</var> and <var>imag-upper-bound</var>, both inclusive.
+It is an error if either of the specified intervals are empty.
+</p>
+</dd>
+
+<dt id="index-polar-complexs_002dbetween_0024"><code>(make-random-polar-complex-generator</code><var> magnitude-lower-bound angle-lower-bound magnitude-upper-bound angle-upper-bound</var><code>)</code></dt>
+<dd><p>Returns a generator that generates inexact complex numbers uniformly.
+The procedure returns complex numbers whose magnitude is between
+<var>magnitude-lower-bound</var> and <var>magnitude-upper-bound</var>, both inclusive,
+and whose angle is between
+<var>angle-lower-bound</var> and <var>angle-upper-bound</var>, both inclusive.
+It is an error if either of the specified intervals are empty.
 </p>
 </dd>
 
@@ -193,6 +208,7 @@ and whose imaginary part is between
 <dt id="index-chars_0024"><code>(make-random-char-generator</code><var> string</var><code>)</code></dt>
 <dd><p>Returns a generator that generates characters in <var>string</var> uniformly.
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
+It is an error if <var>string</var> is empty.
 </p>
 <table><tr><td>&nbsp;</td>
 <td><pre class="example">
@@ -209,6 +225,7 @@ Note that the characters in <var>string</var> need not be distinct, which allows
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
 The length of the strings is uniformly distributed between 0 (inclusive) and
 the length of <var>string</var> (exclusive).
+It is an error if <var>string</var> is empty.
 </p>
 </dd></dl>
 
@@ -228,9 +245,9 @@ and 0 with probability 1 - <var>p</var>.
 an exact integer <var>n</var> between 0 (inclusive)
 and the length of <var>pvec</var> (inclusive)
 with probability equal to the <var>n</var>th element of <var>pvec</var>
-when <var>n</var>is less than length of <var>pvec</var>, and 1 minus sum of
-<var>pvec</var> when <var>n</var>is equal to the length of <var>pvec</var>.
-In other words, probabilities are supplied for all but last element,
+when <var>n</var> is less than the length of <var>pvec</var>, and 1 minus the sum of
+<var>pvec</var> when <var>n</var> is equal to the length of <var>pvec</var>.
+In other words, probabilities are supplied for all but the last element,
 for which the probability is implicit.
 It is an error if the sum of the elements of <var>pvec</var>
 is greater than 1.
@@ -264,12 +281,12 @@ mean <var>L</var>, variance <var>L</var>.
 <dl>
 <dt id="index-integers_002dzipf_0024"><code>(make-zipf-generator</code><var>
 N [ s [ q ] ]</var><code>)</code></dt>
-<dd><p>Creates a generator that yields integers <var>k</var> from the
+<dd><p>Creates a generator that yields exact integers <var>k</var> from the
 generalized Zipf distribution 1<var>/(k+q)<sup>s</sup></var> with (1 &le; k &le; <var>N</var>).
 The default value of <var>s</var> is 1.0 and the default value of
 <var>q</var> is 0.0.  Parameters outside the valid range are likely
 to result in overflows or loss of precision.  Valid parameter ranges
-are real -10 &lt; <var>s</var> &lt; 100 and
+are real -10 &lt; <var>s</var> &lt; 100,
 real -0.5 &lt; <var>q</var> &lt; 2e8 and
 integer 1 &le; <var>N</var> &le; <code>int-max</code>.
 </p></dd></dl>

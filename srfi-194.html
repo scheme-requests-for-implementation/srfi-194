@@ -255,6 +255,8 @@ an exact integer <var>n</var> between 0 (inclusive)
 and the length of <var>weight-vec</var> (inclusive)
 with probability equal to the <var>n</var>th element of <var>weight-vec</var>
 divided by the sum of its elements.
+It is an error if any element of <var>weight-vec</var> is negative
+or their sum is zero.
 </p></dd>
 
 <dt id="index-reals_002dnormal_0024"><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>

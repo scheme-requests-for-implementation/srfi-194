@@ -249,17 +249,12 @@ and 0 with probability 1 - <var>p</var>.
 <dt id="index-binomial"><code>(make-binomial-generator <var>n p</var>)</code></dt>
 <dd><p>Returns a binomial random variate generator, which conceptually is the sum of <code><var>n</var></code> Bernoulli-<code><var>p</var></code> random variables.
 
-<dt id="index-categorical"><code>(make-categorical-generator</code><var> pvec</var><code>)</code></dt>
+<dt id="index-categorical"><code>(make-categorical-generator</code><var> weight-vec</var><code>)</code></dt>
 <dd><p>Returns a generator that yields
 an exact integer <var>n</var> between 0 (inclusive)
-and the length of <var>pvec</var> (inclusive)
-with probability equal to the <var>n</var>th element of <var>pvec</var>
-when <var>n</var> is less than the length of <var>pvec</var>, and 1 minus the sum of
-<var>pvec</var> when <var>n</var> is equal to the length of <var>pvec</var>.
-In other words, probabilities are supplied for all but the last element,
-for which the probability is implicit.
-It is an error if the sum of the elements of <var>pvec</var>
-is greater than 1.
+and the length of <var>weight-vec</var> (inclusive)
+with probability equal to the <var>n</var>th element of <var>weight-vec</var>
+divided by the sum of its elements.
 </p></dd>
 
 <dt id="index-reals_002dnormal_0024"><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>

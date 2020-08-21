@@ -351,8 +351,8 @@
             (reset-source!)
             (define result-vec (vector 0 0 0))
             (define expect-vec (vector 2000 5000 3000))
-            (define pvec (vector 0.2 0.5))
-            (define g (make-categorical-generator pvec))
+            (define wvec (vector 20 50 30))
+            (define g (make-categorical-generator wvec))
             (generator-for-each
               (lambda (i)
                 (vector-set! result-vec i (+ 1 (vector-ref result-vec i))))
@@ -360,11 +360,9 @@
             (vector-for-each
               (lambda (result expect)
                 (define ratio (inexact (/ result expect)))
-                (test-assert (>  ratio 0.9))
-                (test-assert (< ratio 1.1)))
+                (test-approximate 1.0 ratio 0.1))
               result-vec
-              expect-vec)
-            (test-error (make-categorical-generator (vector 0.5 0.9))))
+              expect-vec))
 
 (test-group "Test poisson"
             (reset-source!)

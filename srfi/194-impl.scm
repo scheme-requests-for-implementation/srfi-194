@@ -175,10 +175,8 @@
          1
          0))))
 
-;; note, pvec has 1 less length than the amount of categories.
-;; last category has implicit probability of 1 minus the rest
-(define (make-categorical-generator pvec)
-  (define prob-sum
+(define (make-categorical-generator weights-vec)
+  (define weight-sum
     (vector-fold
       (lambda (sum p)
         (unless (and (number? p)
@@ -186,21 +184,19 @@
           (error "parameter must be a vector of positive numbers"))
         (+ sum p))
       0
-      pvec))
-  (define length (vector-length pvec))
-  (unless (<= prob-sum 1)
-    (error "sum of given probabilities mustn't be greater than 1"))
-  (let ((real-gen (make-random-real-generator 0 1)))
+      weights-vec))
+  (define length (vector-length weights-vec)) 
+  (let ((real-gen (make-random-real-generator 0 weight-sum)))
    (lambda ()
      (define roll (real-gen))
      (let it ((sum 0)
               (i 0))
-       (if (or
-             ;; not matching of any elements in the vector -- return implicit last one
-             (>= i length)
-             (< roll (+ sum (vector-ref pvec i))))
+       (define newsum (+ sum (vector-ref weights-vec i)))
+       (if (or (< roll newsum)
+               ;; in case of rounding errors and no matches, return last element
+               (= i (- length 1)))
            i
-           (it (+ sum (vector-ref pvec i))
+           (it newsum
                (+ i 1)))))))
 
 ;; Normal distribution (continuous - generates real numbers)

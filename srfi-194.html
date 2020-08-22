@@ -95,7 +95,7 @@ and then invokes <var>thunk</var> in tail position.</dd>
 <dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
 <dd><p>Returns a generator of random sources.
 Each invocation of the generator returns the random source
-returned by passing the value of <code>(csurrent-random-source)</code>,
+returned by passing the value of <code>(current-random-source)</code>,
 <var>i</var>, and successive integers <var>j</var>
 (starting with 0) to the SRFI 27 procedure
 <code>random-source-pseudo-randomize!</code>.</p>

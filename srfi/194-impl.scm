@@ -42,6 +42,8 @@
   (unless (and (integer? up-bound)
                (exact? up-bound))
     (error "expected exact integer for upper bound"))
+  (unless (< low-bound up-bound)
+    (error "upper bound should be greater than lower bound"))
   (let ((rand-int-proc (random-source-make-integers (current-random-source)))
         (range (- up-bound low-bound)))
     (lambda ()
@@ -84,8 +86,8 @@
   (unless (and (real? up-bound)
                (finite? up-bound))
      (error "expected finite real number for upper bound"))
-  (unless (<= low-bound up-bound)
-     (error "lower bound must be <= upper bound"))
+  (unless (< low-bound up-bound)
+     (error "lower bound must be < upper bound"))
   (let ((rand-real-proc (random-source-make-reals (current-random-source))))
    (lambda ()
      (define t (rand-real-proc))
@@ -95,12 +97,46 @@
      (+ (* t low-bound)
         (* (- 1.0 t) up-bound)))))
 
-(define (make-random-complex-generator real-lower-bound imag-lower-bound
-                                       real-upper-bound imag-upper-bound)
+(define (make-random-rectangular-generator 
+          real-lower-bound real-upper-bound
+          imag-lower-bound imag-upper-bound)
   (let ((real-gen (make-random-real-generator real-lower-bound real-upper-bound))
         (imag-gen (make-random-real-generator imag-lower-bound imag-upper-bound)))
     (lambda ()
       (make-rectangular (real-gen) (imag-gen)))))
+
+(define make-random-polar-generator
+  (case-lambda
+    ((magnitude-lower-bound magnitude-upper-bound)
+     (make-random-polar-generator 0+0i magnitude-lower-bound magnitude-upper-bound 0 (* 2 PI)))
+    ((origin magnitude-lower-bound magnitude-upper-bound)
+     (make-random-polar-generator origin magnitude-lower-bound magnitude-upper-bound 0 (* 2 PI)))
+    ((magnitude-lower-bound magnitude-upper-bound angle-lower-bound angle-upper-bound)
+     (make-random-polar-generator 0+0i magnitude-lower-bound magnitude-upper-bound angle-lower-bound angle-upper-bound))
+    ((origin magnitude-lower-bound magnitude-upper-bound angle-lower-bound angle-upper-bound)
+     (unless (complex? origin)
+       (error "origin should be complex number"))
+     (unless (and (real? magnitude-lower-bound)
+                  (real? magnitude-upper-bound)
+                  (real? angle-lower-bound)
+                  (real? angle-upper-bound))
+       (error "magnitude and angle bounds should be real numbers"))
+     (unless (and (<= 0 magnitude-lower-bound)
+                  (<= 0 magnitude-upper-bound))
+       (error "magnitude bounds should be positive"))
+     (unless (< magnitude-lower-bound magnitude-upper-bound)
+       (error "magnitude lower bound should be less than upper bound"))
+     (when (= angle-lower-bound angle-upper-bound)
+       (error "angle bounds shouldn't be equal"))
+     (let* ((b (square magnitude-lower-bound))
+            (m (- (square magnitude-upper-bound) b))
+            (t-gen (make-random-real-generator 0. 1.))
+            (phi-gen (make-random-real-generator angle-lower-bound angle-upper-bound)))
+       (lambda ()
+         (let* ((t (t-gen)) 
+                (phi (phi-gen))
+                (r (sqrt (+ (* m t) b))))
+          (+ origin (make-polar r phi))))))))
 
 (define (make-random-boolean-generator)
   (define u1 (make-random-u1-generator))
@@ -110,6 +146,8 @@
 (define (make-random-char-generator str)
   (when (not (string? str))
     (error "expected string"))
+  (unless (> (string-length str) 0)
+    (error "given string is of length 0"))
   (let* ((int-gen (make-random-integer-generator 0 (string-length str))))
    (lambda ()
      (string-ref str (int-gen)))))
@@ -137,10 +175,8 @@
          1
          0))))
 
-;; note, pvec has 1 less length than the amount of categories.
-;; last category has implicit probability of 1 minus the rest
-(define (make-categorical-generator pvec)
-  (define prob-sum
+(define (make-categorical-generator weights-vec)
+  (define weight-sum
     (vector-fold
       (lambda (sum p)
         (unless (and (number? p)
@@ -148,21 +184,19 @@
           (error "parameter must be a vector of positive numbers"))
         (+ sum p))
       0
-      pvec))
-  (define length (vector-length pvec))
-  (unless (<= prob-sum 1)
-    (error "sum of given probabilities mustn't be greater than 1"))
-  (let ((real-gen (make-random-real-generator 0 1)))
+      weights-vec))
+  (define length (vector-length weights-vec)) 
+  (let ((real-gen (make-random-real-generator 0 weight-sum)))
    (lambda ()
      (define roll (real-gen))
      (let it ((sum 0)
               (i 0))
-       (if (or
-             ;; not matching of any elements in the vector -- return implicit last one
-             (>= i length)
-             (< roll (+ sum (vector-ref pvec i))))
+       (define newsum (+ sum (vector-ref weights-vec i)))
+       (if (or (< roll newsum)
+               ;; in case of rounding errors and no matches, return last element
+               (= i (- length 1)))
            i
-           (it (+ sum (vector-ref pvec i))
+           (it newsum
                (+ i 1)))))))
 
 ;; Normal distribution (continuous - generates real numbers)

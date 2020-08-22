@@ -12,7 +12,8 @@
 
 <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI logo" /></a>194: Random data generators</h1>
 
-<p>by Shiro Kawai (design), Arvydas Silanskas (implementation), John Cowan (editor and shepherd), and Linas Vepštas (implementation)</p>
+<p>by Shiro Kawai (design), Arvydas Silanskas (implementation),
+Linas Vepštas (implementation) John Cowan (editor and shepherd)</p>
 
 <h2>Status</h2>
 
@@ -79,9 +80,12 @@ output stream.</p>
 for all the procedures in this SRFI.
 Its initial value is <code>default-random-source</code>
 from SRFI 27.
-Use <code>parameterize</code> to specify a block of code
-in which a different SRFI 27 random source is used.
-Parameterizing does not affect the behavior of existing generators.</dd>
+Use <code>parameterize</code> to specify a dynamic scope
+in which a different SRFI 27 random source is used
+when creating new generators.
+The behavior of existing generators is
+not affected by changes to this parameter.
+</p>
 
 <dt id="with_random_source"><code>(with-random-source</code><var> random-source thunk</var><code>)</code></dt>
 
@@ -113,8 +117,10 @@ some concrete data from the generators.
 </p>
 <dl>
 <dt id="index-integers_002dbetween_0024"><code>(make-random-integer-generator</code><var> lower-bound  upper-bound</var><code>)</code></dt>
-<dd><p>Creates exact integer generators.  Creates a generator that generates integers between
+<dd><p>Returns a generator of exact integers between
 <var>lower-bound</var> (inclusive) and <var>upper-bound</var> (exclusive) uniformly.
+It is an error if the bounds are not exact integers
+or if the specified interval is empty.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">;; A die roller
 (define die (make-random-integer-generator 1 7))
@@ -135,12 +141,14 @@ some concrete data from the generators.
 <dt id="index-uint32s"><code>(make-random-s32-generator</code><code>)</code></dt>
 <dt id="index-int64s"><code>(make-random-u64-generator</code><code>)</code></dt>
 <dt id="index-uint64s"><code>(make-random-s64-generator</code><code>)</code></dt>
-<dd><p>Returns uniform integer generators that generate integers in the ranges of
+<dd><p>These procedures return generators of exact integers in the ranges of
 1-bit unsigned and
-8, 16, 32, and 64-bit signed and unsigned integers.
+8, 16, 32, and 64-bit signed and unsigned values respectively.
 These values can be stored in the corresponding
-<a href="https://srfi.schemers.org/srfi-160/srfi-160.html">SRFI 160</a>
-homogeneous vectors.</p>
+homogeneous vectors of
+<a href="https://srfi.schemers.org/srfi-160/srfi-160.html">SRFI 160</a> and
+<a href="https://srfi.schemers.org/srfi-178/srfi-178.html">SRFI 178</a>.
+</p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(generator-&gt;list (make-random-s8-generator) 10)
  &rArr; (20 -101 50 -99 -111 -28 -19 -61 39 110)
 </pre></td></tr></table>
@@ -151,6 +159,7 @@ homogeneous vectors.</p>
 <em>lower-bound</em> and <em>upper-bound</em>, inclusive.
 Note that this procedure works with either exact or inexact numbers,
 but will produce strange results with a mixture of the two.
+It is an error if the specified interval is empty.
 </dd>
 <dt id="index-reals_002dbetween_0024"><code>(make-random-real-generator</code><var> lower-bound upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact real numbers uniformly.
@@ -158,6 +167,9 @@ but will produce strange results with a mixture of the two.
 floats within the stated range uniformly.)
 The procedure returns reals between
 <var>lower-bound</var> and <var>upper-bound</var>, both inclusive.
+The similar procedure <code>random-real</code> in SRFI 27
+uses the exclusive bounds 0.0 and 1.0.
+It is an error if the specified interval is empty.
 </p>
 <table><tr><td>&nbsp;</td><td><pre class="example">(define uniform-100 (make-random-real-generator 0 100))
 
@@ -170,12 +182,30 @@ The procedure returns reals between
 </pre></td></tr></table>
 </dd>
 
-<dt id="index-complexs_002dbetween_0024"><code>(make-random-complex-generator</code><var> real-lower-bound imag-lower-bound real-upper-bound imag-upper-bound</var><code>)</code></dt>
+<dt id="index-rectangular-complexs_002dbetween_0024"><code>(make-random-rectangular-generator</code><var> real-lower-bound  real-upper-bound imaginary-lower-bound imag-upper-bound</var><code>)</code></dt>
 <dd><p>Returns a generator that generates inexact complex numbers uniformly.
-The procedure returns complex numbers whose real part is between
-<var>real-lower-bound</var> and <var>real-upper-bound</var>, both inclusive,
+The procedure returns complex numbers in a rectangle whose real part is between
+<var>real-lower-bound</var> and <var>real-upper-bound</var> (both inclusive),
 and whose imaginary part is between
-<var>imag-lower-bound</var> and <var>imag-upper-bound</var>, both inclusive.
+<var>imag-lower-bound</var> and <var>imag-upper-bound</var> (both inclusive).
+It is an error if either of the specified intervals are empty.
+</p>
+</dd>
+
+<dt id="index-polar-complexs_002dbetween_0024"><code>(make-random-polar-generator</code><var> </var>[<var> origin ] magnitude-lower-bound magnitude-upper-bound  </var>[<var> angle-lower-bound  angle-upper-bound ]</var><code>)</code></dt>
+<dd><p>Returns a generator that generates inexact complex numbers uniformly.
+The procedure returns complex numbers in
+a sector of an annulus whose origin point is <var>origin</var>,
+whose magnitude is between
+<var>magnitude-lower-bound</var> and <var>magnitude-upper-bound</var> (both inclusive),
+and whose angle is between
+<var>angle-lower-bound</var> and <var>angle-upper-bound</var> (both inclusive).
+It is an error if either of the specified intervals are empty.
+The default value of <var>origin</var> is 0+0<var>i</var>,
+the default value of <var>angle-lower-bound</var> is 0,
+and the default value of <var>angle-upper-bound</var> is 2<var>&pi;</var>.
+If all three are defaulted, the resulting shape
+is a disk centered on the origin.
 </p>
 </dd>
 
@@ -190,6 +220,7 @@ and whose imaginary part is between
 <dt id="index-chars_0024"><code>(make-random-char-generator</code><var> string</var><code>)</code></dt>
 <dd><p>Returns a generator that generates characters in <var>string</var> uniformly.
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
+It is an error if <var>string</var> is empty.
 </p>
 <table><tr><td>&nbsp;</td>
 <td><pre class="example">
@@ -206,6 +237,7 @@ Note that the characters in <var>string</var> need not be distinct, which allows
 Note that the characters in <var>string</var> need not be distinct, which allows simple weighting.
 The length of the strings is uniformly distributed between 0 (inclusive) and
 the length of <var>string</var> (exclusive).
+It is an error if <var>string</var> is empty.
 </p>
 </dd></dl>
 
@@ -213,70 +245,71 @@ the length of <var>string</var> (exclusive).
 
 <dl>
 <dt id="index-bernoulli"><code>(make-bernoulli-generator</code><var> p</var><code>)</code></dt>
-<dd><p>Creates a generator that yields 1 with probability <var>p</var>
+<dd><p>Returns a generator that yields 1 with probability <var>p</var>
 and 0 with probability 1 - <var>p</var>.
 </p></dd>
 
 <dt id="index-binomial"><code>(make-binomial-generator <var>n p</var>)</code></dt>
-<dd><p>Creates a binomial random variate generator, which conceptually is the sum of <code><var>n</var></code> Bernoulli-<code><var>p</var></code> random variables.
+<dd><p>Returns a binomial random variate generator, which conceptually is the sum of <code><var>n</var></code> Bernoulli-<code><var>p</var></code> random variables.
 
-<dt id="index-categorical"><code>(make-categorical-generator</code><var> pvec</var><code>)</code></dt>
-<dd><p>Creates a generator that yields
+<dt id="index-categorical"><code>(make-categorical-generator</code><var> weight-vec</var><code>)</code></dt>
+<dd><p>Returns a generator that yields
 an exact integer <var>n</var> between 0 (inclusive)
-and the length of <var>pvec</var> (inclusive)
-with probability equal to the <var>n</var>th element of <var>pvec</var>
-when n is less than length of <var>pvec</var>, and 1 minus sum of
-<var>pvec</var> when n is equal to the length of <var>pvec</var>.
-In other words, probabilities are supplied for all but last element,
-for which the probability is implicit.
-It is an error if the sum of the elements of <var>pvec</var>
-is greater than 1.
+and the length of <var>weight-vec</var> (inclusive)
+with probability equal to the <var>n</var>th element of <var>weight-vec</var>
+divided by the sum of its elements.
+It is an error if any element of <var>weight-vec</var> is negative
+or their sum is zero.
 </p></dd>
 
 <dt id="index-reals_002dnormal_0024"><code>(make-normal-generator</code><var> [ mean [ deviation ] ]</var><code>)</code></dt>
-<dd><p>Creates a generator that yields real numbers from a normal distribution
+<dd><p>Returns a generator that yields real numbers from a normal distribution
 with the specified <var>mean</var> and <var>deviation</var>.  The default value of <var>mean</var> is 0.0
 and <var>deviation</var> is 1.0.
 </p></dd></dl>
 
 <dl>
 <dt id="index-reals_002dexponential_0024"><code>(make-exponential-generator</code><var> mean</var><code>)</code></dt>
-<dd><p>Creates a generator that yields real numbers from an exponential distribution
+<dd><p>Returns a generator that yields real numbers from an exponential distribution
 with the specified <var>mean</var>.
 </p></dd></dl>
 
 <dl>
 <dt id="index-integers_002dgeometric_0024"><code>(make-geometric-generator</code><var> p</var><code>)</code></dt>
-<dd><p>Creates a generator that yields integers from the geometric distribution
+<dd><p>Returns a generator that yields integers from the geometric distribution
 with success probability <var>p</var> (0 &lt;= p &lt;= 1).  The mean is <code>1/p</code> and
 variance is <code>(1-p)/p^2</code>.
 </p></dd></dl>
 
 <dl>
 <dt id="index-integers_002dpoisson_0024"><code>(make-poisson-generator</code><var> L</var><code>)</code></dt>
-<dd><p>Creates a generator that yields integers from the Poisson distribution with
+<dd><p>Returns a generator that yields integers from the Poisson distribution with
 mean <var>L</var>, variance <var>L</var>.
 </p></dd></dl>
 
 <dl>
 <dt id="index-integers_002dzipf_0024"><code>(make-zipf-generator</code><var>
 N [ s [ q ] ]</var><code>)</code></dt>
-<dd><p>Creates a generator that yields integers <var>k</var> from the
-generalized Zipf distribution <code>1/(k+q)^s</code> with (1 &le; k &le; <var>N</var>).
+<dd><p>Returns a generator that yields exact integers <var>k</var> from the
+generalized Zipf distribution 1<var>/(k+q<sup>s</sup></var> such that 1 &le; k &le; <var>N</var>).
 The default value of <var>s</var> is 1.0 and the default value of
-<var>q</var> is 0.0.  Parameters outside the valid range are likely
-to result in overflows or loss of precision.  Valid parameter ranges
-are real -10 &lt; <var>s</var> &lt; 100 and
-real -0.5 &lt; <var>q</var> &lt; 2e8 and
-integer 1 &le; <var>N</var> &le; <code>int-max</code>.
+<var>q</var> is 0.0.  Parameters outside the following ranges are likely
+to result in overflows or loss of precision:
+-10 &lt; <var>s</var> &lt; 100,
+-0.5 &lt; <var>q</var> &lt; 2<sup>8</sup>, and
+1 &le; <var>N</var>.
 </p></dd></dl>
+
+<p>The following three procedures generate points of real <var>k</var>-dimensional Euclidean space.
+These points are modeled as Scheme vectors of real numbers of length <var>k</var>.</p>
+
 
 <dl>
     <dt id="index-reals_sphere"><code>(make-sphere-generator <var>n</var>)</code></dt>
     <dd>
-        Creates a generator that yields vectors of dimension
-        (<var>n</var> + 1) of real numbers that are randomly,
-        independently distributed on the surface of a
+        Returns a generator that generates points
+        in real (<var>n</var> + 1)-dimensional Euclidean space
+        that are randomly, independently distributed on the surface of a
         <var>n</var>-sphere. That is, the vectors are of unit length.
     </dd>
 </dl>
@@ -284,25 +317,28 @@ integer 1 &le; <var>N</var> &le; <code>int-max</code>.
 <dl>
     <dt id="index-reals_ellipsoid"><code>(make-ellipsoid-generator <var>axes</var>)</code></dt>
     <dd>
-        Creates a generator that yields vectors of dimension (n + 1)
-        of real numbers that are randomly, independently distributed
-        on the surface of a n-ellipsoid.  The ellipsoid is specified
+        Returns a generator that generates points
+        in real (<var>n</var> + 1)-dimensional Euclidean space
+        that are randomly, independently distributed
+        on the surface of a <var>n</var>-ellipsoid.  The ellipsoid is specified
         by the <var>axes</var> argument, which must be a vector of
-        real numbers giving the axes lengths. Given axes = (a,b, ...),
-        then the generated vectors v=(x,y, ...) obey
-        1 = x<sup>2</sup>/a<sup>2</sup> + y<sup>2</sup>/b<sup>2</sup> + ... .
+        real numbers giving the lengths of the axes.
+        Given <var>axes = (a, b, ...)</var>,
+        then the generated vectors <var>v =(x, y, ...)</var> obey
+        1 = <var>x</var><sup>2</sup>/<var>a</var><sup>2</sup> + <var>y</var><sup>2</sup>/<var>b</var><sup>2</sup> + ... .
     </dd>
 </dl>
 
 <dl>
     <dt id="index-reals_ball"><code>(make-ball-generator <var>dimensions</var>)</code></dt>
     <dd>
-        Creates a generator that yields vectors of dimension n of
-        of real numbers corresponding to be inside of a n-ball.
+        Returns a generator that generates points
+        in real <var>n</var>-dimensional Euclidean space
+        corresponding to the inside of a <var>n</var>-ball.
         The <var>dimensions</var> argument can be either a vector
-        of n real numbers, in which case they are taken as the axes
+        of <var>n</var> real numbers, in which case they are taken as the axes
         of an ellipsoid, or it can be an integer, in which case it's
-        treated as the dimension n, (i.e. the generated vectors
+        treated as the dimension <var>n</var>, (i.e. the generated vectors
         are inside a ball of radius 1.)
     </dd>
 </dl>

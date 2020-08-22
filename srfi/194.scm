@@ -28,7 +28,8 @@
     make-random-char-generator
     make-random-string-generator
     make-random-real-generator
-    make-random-complex-generator
+    make-random-rectangular-generator
+    make-random-polar-generator
 
     make-bernoulli-generator
     make-binomial-generator

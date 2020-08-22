@@ -196,18 +196,19 @@
                   (not (= v (floor v))))
                 (make-random-real-generator 1.0 5.0))))
 
-(test-group "Test complex"
+(test-group "Test complex rectangular"
             (reset-source!)
+            
             (assert-number-generator
               (gmap
                 real-part
-                (make-random-complex-generator -10.0 -100.0 10.0 100.0))
+                (make-random-rectangular-generator -10.0 10.0 -100.0 100.0))
               -10 10)
 
             (assert-number-generator
               (gmap
                 imag-part
-                (make-random-complex-generator -100.0 -10.0 100.0 10.0))
+                (make-random-rectangular-generator -100.0 100.0 -10.0 10.0))
               -10 10)
 
             (test-assert
@@ -215,7 +216,63 @@
                 (lambda (num)
                   (and (not (= 0 (real-part num)))
                        (not (= 0 (imag-part num)))))
-                (make-random-complex-generator -10.0 -10.0 10.0 10.0))))
+                (make-random-rectangular-generator -10.0 10.0 -10.0 10.0))))
+(test-group "Test complex polar"
+            (reset-source!)
+            (define PI (* 4 (atan 1.0)))
+            
+            (define (test-polar g origin mag-from mag-to angle-from angle-to test-converge-origin)
+              (assert-number-generator
+                (gmap 
+                  (lambda (num)
+                    (angle (- num origin)))
+                  g)
+                angle-from angle-to)
+              
+              (assert-number-generator
+                (gmap 
+                  (lambda (num)
+                    (magnitude (- num origin)))
+                  g)
+                mag-from mag-to)
+              
+              ;; split generated area through circle at 0.5*(mag-from + mag-to)
+              ;; and validate generated points in them proportional to their area
+              (let* ((outter-count 0)
+                     (inner-count 0)
+                     (donut-area (lambda (r1 r2) (- (* r1 r1) (* r2 r2))))
+                     (mag-mid (/ (+ mag-from mag-to) 2.))
+                     (expected-fraction (/ (donut-area mag-to mag-mid)
+                                           (donut-area mag-mid mag-from))))
+                (generator-for-each
+                  (lambda (point)
+                    (if (< (magnitude (- point origin)) mag-mid)
+                        (set! inner-count (+ 1 inner-count))
+                        (set! outter-count (+ 1 outter-count))))
+                  (gtake g 10000))
+                (test-approximate expected-fraction (/ outter-count inner-count) 0.2))
+              
+              ;; test points converge to center
+              (when test-converge-origin
+                (let ((sum 0+0i))
+                  (generator-for-each
+                    (lambda (point) (set! sum (+ point sum)))
+                    (gtake g 1000))
+                  (test-approximate (real-part origin) (real-part (/ sum 1000.)) 0.1)
+                  (test-approximate (imag-part origin) (imag-part (/ sum 1000.)) 0.1))))
+            
+            
+            (test-polar (make-random-polar-generator 0. 1.)
+                        0+0i 0. 1. (- PI) PI #t)
+            
+            (test-polar (make-random-polar-generator 2+5i 1. 2.)
+                        2+5i 1. 2. (- PI) PI #t)
+            
+            (test-polar (make-random-polar-generator 1. 2. -1. 1.)
+                        0+0i 1. 2. -1. 1. #f)
+            
+            (test-polar (make-random-polar-generator -1+3i 0. 2. (- PI) PI)
+                        -1+3i 0. 2. (- PI) PI #t))
 
 (test-group "Test random bool"
             (reset-source!)
@@ -294,8 +351,8 @@
             (reset-source!)
             (define result-vec (vector 0 0 0))
             (define expect-vec (vector 2000 5000 3000))
-            (define pvec (vector 0.2 0.5))
-            (define g (make-categorical-generator pvec))
+            (define wvec (vector 20 50 30))
+            (define g (make-categorical-generator wvec))
             (generator-for-each
               (lambda (i)
                 (vector-set! result-vec i (+ 1 (vector-ref result-vec i))))
@@ -303,11 +360,9 @@
             (vector-for-each
               (lambda (result expect)
                 (define ratio (inexact (/ result expect)))
-                (test-assert (>  ratio 0.9))
-                (test-assert (< ratio 1.1)))
+                (test-approximate 1.0 ratio 0.1))
               result-vec
-              expect-vec)
-            (test-error (make-categorical-generator (vector 0.5 0.9))))
+              expect-vec))
 
 (test-group "Test poisson"
             (reset-source!)

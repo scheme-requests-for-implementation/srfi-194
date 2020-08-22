@@ -1,4 +1,4 @@
-(define-library (srfi-194)
+(define-library (srfi 194)
   (import (scheme base)
           (scheme case-lambda)
           (scheme inexact)
@@ -28,7 +28,8 @@
     make-random-char-generator
     make-random-string-generator
     make-random-real-generator
-    make-random-complex-generator
+    make-random-rectangular-generator
+    make-random-polar-generator
 
     make-bernoulli-generator
     make-binomial-generator
@@ -39,11 +40,12 @@
     make-poisson-generator
     make-zipf-generator
     make-sphere-generator
+    make-ellipsoid-generator
     make-ball-generator
 
     make-random-source-generator
     gsampling)
 
-  (include "srfi-194-impl.scm")
+  (include "194-impl.scm")
   (include "zipf-zri.scm")
   (include "sphere.scm"))

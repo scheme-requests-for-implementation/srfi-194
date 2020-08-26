@@ -58,7 +58,7 @@
         (and (>= num from)
              (< num lower-quarter)))
       (gtake gen 1000)))
-  
+
   (test-assert
     (generator-any
       (lambda (num)
@@ -198,7 +198,7 @@
 
 (test-group "Test complex rectangular"
             (reset-source!)
-            
+
             (assert-number-generator
               (gmap
                 real-part
@@ -220,22 +220,22 @@
 (test-group "Test complex polar"
             (reset-source!)
             (define PI (* 4 (atan 1.0)))
-            
+
             (define (test-polar g origin mag-from mag-to angle-from angle-to test-converge-origin)
               (assert-number-generator
-                (gmap 
+                (gmap
                   (lambda (num)
                     (angle (- num origin)))
                   g)
                 angle-from angle-to)
-              
+
               (assert-number-generator
-                (gmap 
+                (gmap
                   (lambda (num)
                     (magnitude (- num origin)))
                   g)
                 mag-from mag-to)
-              
+
               ;; split generated area through circle at 0.5*(mag-from + mag-to)
               ;; and validate generated points in them proportional to their area
               (let* ((outter-count 0)
@@ -251,7 +251,7 @@
                         (set! outter-count (+ 1 outter-count))))
                   (gtake g 10000))
                 (test-approximate expected-fraction (/ outter-count inner-count) 0.2))
-              
+
               ;; test points converge to center
               (when test-converge-origin
                 (let ((sum 0+0i))
@@ -260,17 +260,17 @@
                     (gtake g 1000))
                   (test-approximate (real-part origin) (real-part (/ sum 1000.)) 0.1)
                   (test-approximate (imag-part origin) (imag-part (/ sum 1000.)) 0.1))))
-            
-            
+
+
             (test-polar (make-random-polar-generator 0. 1.)
                         0+0i 0. 1. (- PI) PI #t)
-            
+
             (test-polar (make-random-polar-generator 2+5i 1. 2.)
                         2+5i 1. 2. (- PI) PI #t)
-            
+
             (test-polar (make-random-polar-generator 1. 2. -1. 1.)
                         0+0i 1. 2. -1. 1. #f)
-            
+
             (test-polar (make-random-polar-generator -1+3i 0. 2. (- PI) PI)
                         -1+3i 0. 2. (- PI) PI #t))
 

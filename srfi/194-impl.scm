@@ -97,7 +97,7 @@
      (+ (* t low-bound)
         (* (- 1.0 t) up-bound)))))
 
-(define (make-random-rectangular-generator 
+(define (make-random-rectangular-generator
           real-lower-bound real-upper-bound
           imag-lower-bound imag-upper-bound)
   (let ((real-gen (make-random-real-generator real-lower-bound real-upper-bound))
@@ -133,7 +133,7 @@
             (t-gen (make-random-real-generator 0. 1.))
             (phi-gen (make-random-real-generator angle-lower-bound angle-upper-bound)))
        (lambda ()
-         (let* ((t (t-gen)) 
+         (let* ((t (t-gen))
                 (phi (phi-gen))
                 (r (sqrt (+ (* m t) b))))
           (+ origin (make-polar r phi))))))))
@@ -185,7 +185,7 @@
         (+ sum p))
       0
       weights-vec))
-  (define length (vector-length weights-vec)) 
+  (define length (vector-length weights-vec))
   (let ((real-gen (make-random-real-generator 0 weight-sum)))
    (lambda ()
      (define roll (real-gen))

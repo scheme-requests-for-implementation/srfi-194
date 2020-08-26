@@ -77,7 +77,8 @@ output stream.</p>
 <dl>
 <dt id="current_random_source"><code>current-random-source</code></dt>
 <dd>
-<p>An R7RS or SRFI 39 parameter that provides the random source
+<p>An R7RS or <a href="https://srfi.schemers.org/srfi-39/srfi-39.html">SRFI 39</a>
+parameter that provides the random source
 for all the procedures in this SRFI.
 Its initial value is <code>default-random-source</code>
 from SRFI 27.
@@ -360,11 +361,18 @@ the new generator returns an end-of-file object.
 
 <h2>Implementation</h2>
 
-<p>The sample implementation is in the repository of this SRFI.
+<p>The sample implementation is in the
+<a href="https://github.com/scheme-requests-for-implementation/srfi-194">repository</a>
+of this SRFI and in <a href="https://srfi.schemers.org/srfi-194/srfi-194.tgz">this
+<code>.tgz</code> file</a>.
 An R7RS library file and a separate file containing the actual
 implementation are provided, along with a test file that
-works with SRFI 64.  The library itself depends on
-either SRFI 121 or SRFI 158, and of course SRFI 27.</p>
+works with <a href="https://srfi.schemers.org/srfi-64/srfi-64.html">SRFI 64</a>.
+The library itself depends on either
+<a href="https://srfi.schemers.org/srfi-121/srfi-121.html">SRFI
+121</a> or <a href="https://srfi.schemers.org/srfi-158/srfi-158.html">SRFI
+158</a>, and of course <a href="https://srfi.schemers.org/srfi-27/srfi-27.html">SRFI
+27</a>.</p>
 
 <h2>Acknowledgements</h2>
 

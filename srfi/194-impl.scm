@@ -389,6 +389,7 @@
 
 
 ;;; Code for binomial random variable generation.
+;;; Written by Brad Lucier, lucier@math.purdue.edu
 
 ;;; binomial-geometric is somewhat classical, the
 ;;; "First waiting time algorithm" from page 525 of
@@ -515,8 +516,8 @@
                   (+ (* (+ (* 2. (/ a us)) b) u) c)))))
           (cond ((or (< k 0)
                      (< n k))
-                 (loop (random-real)
-                       (random-real)))
+                 (loop (rand-real-proc)
+                       (rand-real-proc)))
                 ((and (<= 0.07 us)
                       (<= v v_r))
                  k)
@@ -542,5 +543,5 @@
                                   (+ (stirling-tail k)
                                      (stirling-tail (- n k))))))
                        k
-                       (loop (random-real)
-                             (random-real)))))))))))
+                       (loop (rand-real-proc)
+                             (rand-real-proc)))))))))))

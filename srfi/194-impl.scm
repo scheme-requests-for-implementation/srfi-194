@@ -229,8 +229,8 @@
              (let ((result state))
               (set! state #f)
               result)
-             (let ((r (sqrt (* -2 (log (rand-real-proc)))))
-                   (theta (* 2 PI (rand-real-proc))))
+             (let* ((r (sqrt (* -2 (log (rand-real-proc)))))
+                    (theta (* 2 PI (rand-real-proc))))
                (set! state (+ mean (* deviation r (cos theta))))
                (+ mean (* deviation r (sin theta))))))))))
 
@@ -401,7 +401,8 @@
 ;;; random variates, Journal of Statistical Computation
 ;;; and Simulation, 46:1-2, 101-110,
 ;;; DOI: https://doi.org/10.1080/00949659308811496
-;;; stirling-tail is also from that paper.
+;;; stirling-tail and BTRD (mentioned in the comments)
+;;; are also from that paper.
 
 ;;; Another implementation of the same algorithm is at
 ;;; https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/kernels/random_binomial_op.cc
@@ -504,9 +505,10 @@
          (rand-real-proc
           (random-source-make-reals (current-random-source))))
     (lambda ()
-      (let loop ((u (rand-real-proc))
-                 (v (rand-real-proc)))
-        (let* ((u
+      (let loop ()
+        (let* ((u (rand-real-proc))
+               (v (rand-real-proc))
+               (u
                 (- u 0.5))
                (us
                 (- 0.5 (abs u)))
@@ -516,8 +518,7 @@
                   (+ (* (+ (* 2. (/ a us)) b) u) c)))))
           (cond ((or (< k 0)
                      (< n k))
-                 (loop (rand-real-proc)
-                       (rand-real-proc)))
+                 (loop))
                 ((and (<= 0.07 us)
                       (<= v v_r))
                  k)
@@ -543,5 +544,4 @@
                                   (+ (stirling-tail k)
                                      (stirling-tail (- n k))))))
                        k
-                       (loop (rand-real-proc)
-                             (rand-real-proc)))))))))))
+                       (loop))))))))))

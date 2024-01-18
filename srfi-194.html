@@ -25,6 +25,8 @@ Linas Vepštas (implementation), and John Cowan (editor and shepherd)</p>
   <li>Draft #3 published: 2020-08-06</li>
   <li>Draft #4 published: 2020-08-22</li>
   <li>Finalized: 2020-08-26</li>
+  <li>2024-01-17 (Fixed definition of <a href="#make_random_source_generator">make-random-source-generator</a>.)</li>
+
 </ul>
 
 <h2>Abstract</h2>
@@ -88,12 +90,13 @@ not affected by changes to this parameter.
 and then invokes <var>thunk</var>.</dd>
 
 <dt id="make_random_source_generator"><code>(make-random-source-generator</code><var> i</var><code>)</code></dt>
-<dd><p>Returns a generator of random sources.
-Each invocation of the generator returns the random source
-returned by passing the value of <code>(current-random-source)</code>,
-<var>i</var>, and successive integers <var>j</var>
-(starting with 0) to the SRFI 27 procedure
-<code>random-source-pseudo-randomize!</code>.</p>
+<dd><p>Returns a generator of random sources.  Each invocation of the
+generator returns a new random source created by
+calling <code>make-random-source</code> (SRFI 27).  The new random
+source is passed to
+<code>random-source-pseudo-randomize!</code> with <var>i</var>, and
+successive integers <var>j</var> (starting with 0), before being
+returned.
 <p>The random sources are guaranteed to be distinct as long as
 <var>i</var> and <var>j</var> are not too large
 and the generator is not called too many times.

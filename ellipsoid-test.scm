@@ -1,3 +1,5 @@
+; SPDX-FileCopyrightText: 2020 Linas Vepštas
+; SPDX-License-Identifier: MIT
 ;
 ; ellipsoid-test.scm
 ;

@@ -1,3 +1,5 @@
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-License-Identifier: MIT
 ;
 ; zipf-zri.scm
 ; Create a Zipf random distribution.

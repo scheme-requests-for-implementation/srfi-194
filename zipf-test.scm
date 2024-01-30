@@ -1,3 +1,6 @@
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-FileCopyrightText: 2020 Linas Vepštas
+; SPDX-License-Identifier: MIT
 ;
 ; zipf-test.scm
 ; Unit tests for the Zipf (zeta) distribution.

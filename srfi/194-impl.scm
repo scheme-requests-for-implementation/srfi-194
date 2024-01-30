@@ -1,3 +1,7 @@
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-FileCopyrightText: 2020 Bradley Lucier
+; SPDX-License-Identifier: MIT
+
 ;;
 ;; Parameters
 ;;

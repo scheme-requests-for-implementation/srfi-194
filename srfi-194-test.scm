@@ -1,3 +1,7 @@
+; SPDX-FileCopyrightText: 2020 John Cowan
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-License-Identifier: MIT
+
 ;; NOTE: for zipf tests data can be exported, this can be enabled by uncommenting appropriate lines.
 
 (import

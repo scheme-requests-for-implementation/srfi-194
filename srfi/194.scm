@@ -1,3 +1,6 @@
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-License-Identifier: MIT
+
 (define-library (srfi 194)
   (import (scheme base)
           (scheme case-lambda)

@@ -1,3 +1,6 @@
+; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+; SPDX-License-Identifier: MIT
+;
 ; Take REPS samples from unit sphere, verify random distribution.
 ;
 ; This test checks that:

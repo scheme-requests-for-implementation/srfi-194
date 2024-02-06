@@ -64,7 +64,11 @@
 
   ; Sequence 1..NVOCAB
   (define seq
-    (vector-unfold (lambda (i x) (values x (+ x 1))) NVOCAB 1))
+    (cond-expand
+     (gambit
+      (list->vector (iota NVOCAB 1)))
+     (else
+      (vector-unfold (lambda (i x) (values x (+ x 1))) NVOCAB 1))))
 
   ; Sequence  1/(k+QUE)^ESS
   (define inv-pow (vector-map

@@ -1,116 +1,133 @@
-; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
-; SPDX-FileCopyrightText: 2020 Linas Vepštas
-; SPDX-License-Identifier: MIT
-;
-; sphere.scm
-; Uniform distributions on a sphere, and a ball.
-; Submitted for inclusion in srfi-194
-;
-; Algorithm based on BoxMeuller as described in
-; http://extremelearning.com.au/how-to-generate-uniformly-random-points-on-n-spheres-and-n-balls/
-;
+;;; SPDX-FileCopyrightText: 2020 Arvydas Silanskas
+;;; SPDX-FileCopyrightText: 2020 Linas Vepštas
+;;; SPDX-FileCopyrightText: 2024 Bradley J Lucier
+;;; SPDX-License-Identifier: MIT
+;;;
+;;; sphere.scm
+;;; Uniform distributions on a sphere, and a ball.
+;;; Submitted for inclusion in srfi-194
+;;;
+;;; Algorithm based on BoxMeuller as described in
+;;; http://extremelearning.com.au/how-to-generate-uniformly-random-points-on-n-spheres-and-n-balls/
+;;;
+;;; make-sphere-generator N - return a generator of points uniformly
+;;; distributed on an N-dimensional sphere.
+;;; This implements the BoxMeuller algorithm, that is, of normalizing
+;;; N+1 Gaussian random variables.
 
-; make-sphere-generator N - return a generator of points uniformly
-; distributed on an N-dimensional sphere.
-; This implements the BoxMeuller algorithm, that is, of normalizing
-; N+1 Gaussian random variables.
 (define (make-sphere-generator arg)
   (cond
-    ((integer? arg) (make-ellipsoid-generator* (make-vector (+ 1 arg) 1.0)))
-    (else (error "expected argument to be an integer dimension"))))
+   ((and (integer? arg)
+         (exact? arg)
+         (positive? arg))
+    (make-ellipsoid-generator* (make-vector (+ 1 arg) 1.0)))
+   (else
+    (error "make-sphere-generator: The argument must be a positive exact integer: " arg))))
 
 (define (make-ellipsoid-generator arg)
-  (cond
-    ((vector? arg) (make-ellipsoid-generator* arg))
-    (else (error "expected argument to be a vector of axis lengths"))))
 
-; -----------------------------------------------
-; Generator of points uniformly distributed on an N-dimensional ellipsoid.
-;
-; The `axes` should be a vector of floats, specifying the axes of the
-; ellipsoid. The algorithm used is an accept/reject sampling algo,
-; wherein the acceptance rate is proportional to the measure of a
-; surface element on the ellipsoid. The measure is straight-forward to
-; arrive at, and the 3D case is described by `mercio` in detail at
-; https://math.stackexchange.com/questions/973101/how-to-generate-points-uniformly-distributed-on-the-surface-of-an-ellipsoid
-;
-; Note that sampling means that performance goes as
-; O(B/A x C/A x D/A x ...) where `A` is the shorest axis,
-; and `B`, `C`, `D`, ... are the other axes. Maximum performance
-; achieved on spheres.
-;
+  (define (return-error)
+    (error "make-ellipsoid-generator: The argument must be a vector of real numbers that are finite and positive when converted to inexact: " arg))
+
+  (if (and (vector? arg)
+           (vector-every real? arg))
+      (let ((inexact-arg (vector-map inexact arg)))
+        (if (vector-every (lambda (x)
+                            (and (positive? x) (finite? x)))
+                          inexact-arg)
+            (make-ellipsoid-generator* inexact-arg)
+            (return-error)))
+      (return-error)))
+
+;;; -----------------------------------------------
+;;; Generator of points uniformly distributed on an N-dimensional ellipsoid.
+;;;
+;;; The `axes` should be a vector of floats, specifying the axes of the
+;;; ellipsoid. The algorithm used is an accept/reject sampling algo,
+;;; wherein the acceptance rate is proportional to the measure of a
+;;; surface element on the ellipsoid. The measure is straight-forward to
+;;; arrive at, and the 3D case is described by `mercio` in detail at
+;;; https://math.stackexchange.com/questions/973101/how-to-generate-points-uniformly-distributed-on-the-surface-of-an-ellipsoid
+;;;
+;;; Note that sampling means that complexity goes as
+;;; O(B/A x C/A x D/A x ...) where `A` is the shorest axis,
+;;; and `B`, `C`, `D`, ... are the other axes. Maximum performance
+;;; is achieved on spheres, which is the case used in make-ball-generator
+
 (define (make-ellipsoid-generator* axes)
+  (let ((gauss (make-normal-generator))
+        (uniform (make-random-real-generator 0. 1.)) ;; should really be from a separate stream
+        (min-axis (vector-fold min +inf.0 axes)))
 
-  ; A vector of normal gaussian generators
-  (define gaussg-vec
-    (make-vector (vector-length axes) (make-normal-generator 0 1)))
+    (define (sphere)
+      (let* ((point
+              (vector-map (lambda (_) (gauss)) axes))
+             (norm-inverse
+              (/ (sqrt (vector-fold (lambda (sum x)
+                                      (+ sum (square x)))
+                                    0.
+                                    point)))))
+        (vector-map (lambda (x) (* x norm-inverse)) point)))
 
-  ; Banach l2-norm of a vector
-  (define (l2-norm VEC)
-    (sqrt (vector-fold
-            (lambda (sum x) (+ sum (* x x)))
-            0
-            VEC)))
+    (define (ellipsoid-distance ray)
+      (sqrt (vector-fold
+             (lambda (sum x a) (+ sum (square (/ x a))))
+             0. ray axes)))
 
-  ; Generate one point on a sphere
-  (define (sph)
-    ; Sample a point
-    (define point
-      (vector-map (lambda (gaussg) (gaussg)) gaussg-vec))
-    ; Project it to the unit sphere (make it unit length)
-    (define norm (/ 1.0 (l2-norm point)))
-    (vector-map (lambda (x) (* x norm)) point))
+    (define (keep point)
+      (< (uniform)
+         (* min-axis (ellipsoid-distance point))))
 
-  ; Distance from origin to the surface of the
-  ; ellipsoid along direction RAY.
-  (define (ellipsoid-dist RAY)
-    (sqrt (vector-fold
-            (lambda (sum x a) (+ sum (/ (* x x) (* a a))))
-            0 RAY axes)))
+    (define (sample)
+      (let ((point (sphere)))
+        (if (keep point)
+            point
+            (sample))))
 
-  ; Find the shortest axis.
-  (define minor
-    (vector-fold
-        (lambda (mino l) (if (< l mino) l mino))
-        1e308 axes))
+    (lambda ()
+      (vector-map * (sample) axes))))
 
-  ; Uniform generator [0,1)
-  (define uni (make-random-real-generator 0.0 1.0))
 
-  ; Return #t if the POINT can be kept; else must resample.
-  (define (keep POINT)
-    (< (uni) (* minor (ellipsoid-dist POINT))))
 
-  ; Sample until a good point is found. The returned sample is a
-  ; vector of unit length (we already normed up above).
-  (define (sample)
-    (define vect (sph))
-    (if (keep vect) vect (sample)))
+;;;-----------------------------------------------
+;;; make-ball-generator N - return a generator of points
+;;; inside an N-dimensional ball.  It's based on the algorithm in
+;;;
+;;; An Efficient Method for Generating Points
+;;; Uniformly Distributed in Hyperellipsoids
+;;; Jean Dezert and Christian Musso
+;;; https://www.onera.fr/sites/default/files/297/C013_-_Dezert_-_YBSTributeMonterey2001.pdf
+;;;
+;;; which in turn is based on the Harman-Lacko-Voelker Dropped Coordinate method for
+;;; generating points uniformly inside the unit ball in N dimensions.
 
-  (lambda ()
-  ; Find a good point, and rescale to ellipsoid.
-    (vector-map
-         (lambda (x a) (* x a)) (sample) axes))
-)
-
-; -----------------------------------------------
-; make-ball-generator N - return a generator of points uniformly
-; distributed inside an N-dimensional ball.
-; This implements the Harman-Lacko-Voelker Dropped Coordinate method.
 (define (make-ball-generator arg)
-  (define dim-sizes
-    (cond
-      ((integer? arg) (make-vector (+ 2 arg) 1.0))
-      ((vector? arg) (vector-append arg (vector 1.0 1.0)))
-      (else (error "expected argument to either be a number (dimension), or vector (axis length for the dimensions)"))))
-  (define N (- (vector-length dim-sizes) 2))
-  (define sphereg (make-sphere-generator (+ N 2)))
-  ; Create a vector of N+2 values, and drop the last two.
-  ; (The sphere already added one, so we only add one more)
-  (lambda ()
-    (vector-map
-      (lambda (el dim-size _) (* el dim-size))
-      (sphereg)
-      dim-sizes
-      (make-vector N #f))))
 
+  (define (return-error)
+    (error "make-ball-generator: The argument must be either an exact, positive, integer or a vector of real numbers that are positive and finite when converted to inexact: " arg))
+
+  (if (and (integer? arg)
+           (exact? arg)
+           (positive? arg))
+      (make-ball-generator* (make-vector arg 1.0))
+      (if (and (vector? arg)
+               (vector-every real? arg))
+          (let ((inexact-arg (vector-map inexact arg)))
+            (if (vector-every (lambda (x)
+                                (and (positive? x)
+                                     (finite? x)))
+                              inexact-arg)
+                (make-ball-generator* inexact-arg)
+                (return-error)))
+          (return-error))))
+
+(define (make-ball-generator* axes)
+  (let* ((sphere-generator
+          ;; returns vectors with (vector-length axes) + 2 elements
+          (make-sphere-generator (+ (vector-length axes) 1))))
+    (lambda ()
+      ;; returns vectors with (vector-length axes) elements
+      (vector-map (lambda (el axis)
+                    (* el axis))
+                  (sphere-generator)
+                  axes))))

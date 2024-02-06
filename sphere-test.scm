@@ -182,14 +182,14 @@
       ;; O(Delta^4) numerical integration
       ;; integrate f between t0 and t1 with N intervals
       (let* ((Delta (/ (- t1 t0) N))
-             (sum1 (do ((i 0 (fx+ i 1))
+             (sum1 (do ((i 0 (+ i 1))
                         (sum 0. (+ sum
                                    (f (+ t0 (* i Delta)))
-                                   (f (+ t0 (* (fx+ i 1) Delta))))))
-                       ((fx= i N) sum)))
-             (sum2 (do ((i 0 (fx+ i 1))
+                                   (f (+ t0 (* (+ i 1) Delta))))))
+                       ((= i N) sum)))
+             (sum2 (do ((i 0 (+ i 1))
                         (sum 0. (+ sum (f (+ t0 (* (+ i 0.5) Delta))))))
-                       ((fx= i N) sum))))
+                       ((= i N) sum))))
         (* Delta (/ (+ (* 4 sum2) sum1) 6))))
 
     (define p-right

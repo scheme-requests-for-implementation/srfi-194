@@ -25,11 +25,24 @@
   (with-output-to-file filename write-vec))
 
 ; ------------------------------------------------------------------
-; Simple test harness for exploring the parameter space.
+; Test harness for exploring the Zipf (Riemann/Hurwicz zeta) distribution
+; parameter space.
 ;
-; Take REPS samples from the zeta distribution (ZGEN NVOCAB ESS QUE)
-; Accumulate them into NVOCAB bins.
-; Normalize to unit probability (i.e. divide by NVOCAB)
+;     (test-zipf TEST-ID NVOCAB ESS QUE REPS TOL)
+;
+; * TEST-ID -- String ID, for debugging.
+; * The next three parameters are presented to the generator as
+;     (make-zipf-generator NVOCAB ESS QUE)
+;   ++  NVOCAB -- Size of vocabulary to select from.
+;   ++  ESS -- The Riemann zeta "s" exponent.
+;   ++  QUE -- The Hurwicz zeta "q" offset.
+; * REPS -- The number of samples to draw from the distribution.
+; * TOL -- The test tolerance, governing the expected failure rate.
+;
+; The algorithm is roughly:
+;   Take REPS samples (make-zipf-generator NVOCAB ESS QUE)
+;   Accumulate them into NVOCAB histogram bins.
+;   Normalize counts to unit probability (i.e. divide by NVOCAB)
 ;
 ; The resulting distribution should uniformly converge to C/(k+q)^s
 ; for 1 <= k <= NVOCAB where C is a normalization constant.
@@ -53,7 +66,6 @@
          (vector-set! bin-counts offset (+ 1 (vector-ref bin-counts offset))))
        (gtake (ZGEN NVOCAB ESS QUE) REPS))
      bin-counts))
-
 
   ; Verify the distribution is within tolerance.
   ; This is written out long-hand for easier debuggability.

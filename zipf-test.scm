@@ -54,7 +54,10 @@
 ; setting TOL to 6 gives a six-sigma bandpass, allowing the tests to
 ; usually pass.
 ;
-(define (test-zipf ZGEN NVOCAB ESS QUE REPS TOL)
+(define (test-zipf TEST-ID NVOCAB ESS QUE REPS TOL)
+
+  ; Default random number generator
+  (define ZGEN make-zipf-generator)
 
   ; Bin-counter containing accumulated histogram.
   (define bin-counts
@@ -129,21 +132,19 @@
                                    NVOCAB)))
 
   ; The total counts in the bins should be equal to REPS
-  (test-assert
+  (test-assert TEST-ID
     (equal? REPS
             (vector-fold
               (lambda (sum cnt) (+ sum cnt)) 0 bin-counts)))
 
   ; Test for uniform convergence.
-  (test-assert (<= l0-norm TOL))
+  (test-assert TEST-ID (<= l0-norm TOL))
 
   ; Should not random walk too far away.
   ; Could tighten this with a proper theory of the error distribution.
-  (test-assert (< (abs mean) 3))
+  (test-assert TEST-ID (< (abs mean) 3))
   ; I don't understand the error distribution ....
   ; (test-assert (and (< 0.4 root-mean-square) (< root-mean-square 1.5)))
-
-  (test-assert (<= l0-norm TOL))
 
   ; Utility debug printing
   ;(vector-to-file probility "probility.dat")
@@ -153,6 +154,7 @@
 
 ; Explore the parameter space.
 (define (zipf-test-group)
+  ; (test-start "srfi-194-zipf")
 
   ; The unit test computes something that is "almost" a standard
   ; deviation for the error distribution. Except, maybe not quite,
@@ -167,122 +169,122 @@
   (define hack-que 3.0)
 
   ; Zoom into s->1
-  (test-zipf make-zipf-generator 30 1.1     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 1.01    0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 1.001   0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 1.0001  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 1.00001 0 1000 six-sigma)
+  (test-zipf "zoom-1"   30 1.1     0 1000 six-sigma)
+  (test-zipf "zoom-2"   30 1.01    0 1000 six-sigma)
+  (test-zipf "zoom-3"   30 1.001   0 1000 six-sigma)
+  (test-zipf "zoom-4"   30 1.0001  0 1000 six-sigma)
+  (test-zipf "zoom-5"   30 1.00001 0 1000 six-sigma)
 
-  (test-zipf make-zipf-generator 30 (+ 1 1e-6)  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 (+ 1 1e-8)  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 (+ 1 1e-10) 0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 (+ 1 1e-12) 0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 (+ 1 1e-14) 0 1000 six-sigma)
-  (test-zipf make-zipf-generator 30 1           0 1000 six-sigma)
+  (test-zipf "zoom-6"   30 (+ 1 1e-6)  0 1000 six-sigma)
+  (test-zipf "zoom-8"   30 (+ 1 1e-8)  0 1000 six-sigma)
+  (test-zipf "zoom-10"  30 (+ 1 1e-10) 0 1000 six-sigma)
+  (test-zipf "zoom-12"  30 (+ 1 1e-12) 0 1000 six-sigma)
+  (test-zipf "zoom-14"  30 (+ 1 1e-14) 0 1000 six-sigma)
+  (test-zipf "zoom-inf" 30 1           0 1000 six-sigma)
 
   ; Verify improving uniform convergence
-  (test-zipf make-zipf-generator 30 1  0 10000   six-sigma)
-  (test-zipf make-zipf-generator 30 1  0 100000  six-sigma)
+  (test-zipf "uniform-1" 30 1  0 10000   six-sigma)
+  (test-zipf "uniform-2" 30 1  0 100000  six-sigma)
 
   ; Larger vocabulary
-  (test-zipf make-zipf-generator 300 1.1     0 10000 six-sigma)
-  (test-zipf make-zipf-generator 300 1.01    0 10000 six-sigma)
-  (test-zipf make-zipf-generator 300 1.001   0 10000 six-sigma)
-  (test-zipf make-zipf-generator 300 1.0001  0 10000 six-sigma)
-  (test-zipf make-zipf-generator 300 1.00001 0 10000 six-sigma)
+  (test-zipf "mid-voc-1" 300 1.1     0 10000 six-sigma)
+  (test-zipf "mid-voc-2" 300 1.01    0 10000 six-sigma)
+  (test-zipf "mid-voc-3" 300 1.001   0 10000 six-sigma)
+  (test-zipf "mid-voc-4" 300 1.0001  0 10000 six-sigma)
+  (test-zipf "mid-voc-5" 300 1.00001 0 10000 six-sigma)
 
   ; Larger vocabulary. Take more samples....
-  (test-zipf make-zipf-generator 3701 1.1     0 40000 six-sigma)
-  (test-zipf make-zipf-generator 3701 1.01    0 40000 six-sigma)
-  (test-zipf make-zipf-generator 3701 1.001   0 40000 six-sigma)
-  (test-zipf make-zipf-generator 3701 1.0001  0 40000 six-sigma)
-  (test-zipf make-zipf-generator 3701 1.00001 0 40000 six-sigma)
+  (test-zipf "large-voc-1" 3701 1.1     0 40000 six-sigma)
+  (test-zipf "large-voc-2" 3701 1.01    0 40000 six-sigma)
+  (test-zipf "large-voc-3" 3701 1.001   0 40000 six-sigma)
+  (test-zipf "large-voc-4" 3701 1.0001  0 40000 six-sigma)
+  (test-zipf "large-voc-5" 3701 1.00001 0 40000 six-sigma)
 
   ; Huge vocabulary; few samples. Many bins will be empty,
   ; causing the std-dev to get large.
-  (test-zipf make-zipf-generator 43701 (+ 1 1e-6)  0 60000 9.5)
-  (test-zipf make-zipf-generator 43701 (+ 1 1e-7)  0 60000 9.5)
-  (test-zipf make-zipf-generator 43701 (+ 1 1e-9)  0 60000 9.5)
-  (test-zipf make-zipf-generator 43701 (+ 1 1e-12) 0 60000 9.5)
-  (test-zipf make-zipf-generator 43701 1           0 60000 9.5)
+  (test-zipf "huge-voc-1" 43701 (+ 1 1e-6)  0 60000 9.5)
+  (test-zipf "huge-voc-2" 43701 (+ 1 1e-7)  0 60000 9.5)
+  (test-zipf "huge-voc-3" 43701 (+ 1 1e-9)  0 60000 9.5)
+  (test-zipf "huge-voc-4" 43701 (+ 1 1e-12) 0 60000 9.5)
+  (test-zipf "huge-voc-5" 43701 1           0 60000 9.5)
 
   ; Large s, small range
-  (test-zipf make-zipf-generator 5 1.1     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 5 2.01    0 1000 six-sigma)
-  (test-zipf make-zipf-generator 5 4.731   0 1000 six-sigma)
-  (test-zipf make-zipf-generator 5 9.09001 0 1000 six-sigma)
-  (test-zipf make-zipf-generator 5 13.45   0 1000 8.0)
+  (test-zipf "big-s-lo-1" 5 1.1     0 1000 six-sigma)
+  (test-zipf "big-s-lo-2" 5 2.01    0 1000 six-sigma)
+  (test-zipf "big-s-lo-3" 5 4.731   0 1000 six-sigma)
+  (test-zipf "big-s-lo-4" 5 9.09001 0 1000 six-sigma)
+  (test-zipf "big-s-lo-5" 5 13.45   0 1000 8.0)
 
   ; Large s, larger range. Most histogram bins will be empty
   ; so allow much larger error margins.
-  (test-zipf make-zipf-generator 130 1.5     0 30000 six-sigma)
-  (test-zipf make-zipf-generator 130 2.03    0 30000 9.0)
-  (test-zipf make-zipf-generator 130 4.5     0 30000 16.0)
-  (test-zipf make-zipf-generator 130 6.66    0 30000 24.0)
+  (test-zipf "bis-mid-1" 130 1.5     0 30000 six-sigma)
+  (test-zipf "bis-mid-2" 130 2.03    0 30000 9.0)
+  (test-zipf "bis-mid-3" 130 4.5     0 30000 16.0)
+  (test-zipf "bis-mid-4" 130 6.66    0 30000 24.0)
 
   ; Verify that accuracy improves with more samples.
-  (test-zipf make-zipf-generator 129 1.1     0 10000 six-sigma)
-  (test-zipf make-zipf-generator 129 1.01    0 10000 six-sigma)
-  (test-zipf make-zipf-generator 129 1.001   0 10000 six-sigma)
-  (test-zipf make-zipf-generator 129 1.0001  0 10000 six-sigma)
-  (test-zipf make-zipf-generator 129 1.00001 0 10000 six-sigma)
+  (test-zipf "samp-bi-1" 129 1.1     0 10000 six-sigma)
+  (test-zipf "samp-bi-2" 129 1.01    0 10000 six-sigma)
+  (test-zipf "samp-bi-3" 129 1.001   0 10000 six-sigma)
+  (test-zipf "samp-bi-4" 129 1.0001  0 10000 six-sigma)
+  (test-zipf "samp-bi-5" 129 1.00001 0 10000 six-sigma)
 
   ; Non-zero Hurwicz parameter
-  (test-zipf make-zipf-generator 131 1.1     0.3    10000 six-sigma)
-  (test-zipf make-zipf-generator 131 1.1     1.3    10000 six-sigma)
-  (test-zipf make-zipf-generator 131 1.1     6.3    10000 six-sigma)
-  (test-zipf make-zipf-generator 131 1.1     20.23  10000 six-sigma)
+  (test-zipf "hurw-1" 131 1.1     0.3    10000 six-sigma)
+  (test-zipf "hurw-2" 131 1.1     1.3    10000 six-sigma)
+  (test-zipf "hurw-3" 131 1.1     6.3    10000 six-sigma)
+  (test-zipf "hurw-4" 131 1.1     20.23  10000 six-sigma)
 
   ; Negative Hurwicz parameter. Must be greater than branch point at -0.5.
-  (test-zipf make-zipf-generator 81 1.1     -0.1   1000 six-sigma)
-  (test-zipf make-zipf-generator 81 1.1     -0.3   1000 six-sigma)
-  (test-zipf make-zipf-generator 81 1.1     -0.4   1000 six-sigma)
-  (test-zipf make-zipf-generator 81 1.1     -0.499 1000 six-sigma)
+  (test-zipf "hneg-1" 81 1.1     -0.1   1000 six-sigma)
+  (test-zipf "hneg-2" 81 1.1     -0.3   1000 six-sigma)
+  (test-zipf "hneg-3" 81 1.1     -0.4   1000 six-sigma)
+  (test-zipf "hneg-4" 81 1.1     -0.499 1000 six-sigma)
 
   ; A walk into a stranger corner of the parameter space.
-  (test-zipf make-zipf-generator 131 1.1     41.483 10000 hack-que)
-  (test-zipf make-zipf-generator 131 2.1     41.483 10000 hack-que)
-  (test-zipf make-zipf-generator 131 6.1     41.483 10000 hack-que)
-  (test-zipf make-zipf-generator 131 16.1    41.483 10000 hack-que)
-  (test-zipf make-zipf-generator 131 46.1    41.483 10000 hack-que)
-  (test-zipf make-zipf-generator 131 96.1    41.483 10000 hack-que)
+  (test-zipf "big-h-1" 131 1.1     41.483 10000 hack-que)
+  (test-zipf "big-h-2" 131 2.1     41.483 10000 hack-que)
+  (test-zipf "big-h-3" 131 6.1     41.483 10000 hack-que)
+  (test-zipf "big-h-4" 131 16.1    41.483 10000 hack-que)
+  (test-zipf "big-h-5" 131 46.1    41.483 10000 hack-que)
+  (test-zipf "big-h-6" 131 96.1    41.483 10000 hack-que)
 
   ; A still wilder corner of the parameter space.
-  (test-zipf make-zipf-generator 131 1.1     1841.4 10000 hack-que)
-  (test-zipf make-zipf-generator 131 1.1     1.75e6 10000 hack-que)
-  (test-zipf make-zipf-generator 131 2.1     1.75e6 10000 hack-que)
-  (test-zipf make-zipf-generator 131 12.1    1.75e6 10000 hack-que)
-  (test-zipf make-zipf-generator 131 42.1    1.75e6 10000 hack-que)
+  (test-zipf "huhu-1" 131 1.1     1841.4 10000 hack-que)
+  (test-zipf "huhu-2" 131 1.1     1.75e6 10000 hack-que)
+  (test-zipf "huhu-3" 131 2.1     1.75e6 10000 hack-que)
+  (test-zipf "huhu-4" 131 12.1    1.75e6 10000 hack-que)
+  (test-zipf "huhu-5" 131 42.1    1.75e6 10000 hack-que)
 
   ; Lets try s less than 1
-  (test-zipf make-zipf-generator 35 0.9     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 35 0.99    0 1000 six-sigma)
-  (test-zipf make-zipf-generator 35 0.999   0 1000 six-sigma)
-  (test-zipf make-zipf-generator 35 0.9999  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 35 0.99999 0 1000 six-sigma)
+  (test-zipf "small-s-1" 35 0.9     0 1000 six-sigma)
+  (test-zipf "small-s-2" 35 0.99    0 1000 six-sigma)
+  (test-zipf "small-s-3" 35 0.999   0 1000 six-sigma)
+  (test-zipf "small-s-4" 35 0.9999  0 1000 six-sigma)
+  (test-zipf "small-s-5" 35 0.99999 0 1000 six-sigma)
 
   ; Attempt to force an overflow
-  (test-zipf make-zipf-generator 437 (- 1 1e-6)  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 437 (- 1 1e-7)  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 437 (- 1 1e-9)  0 1000 six-sigma)
-  (test-zipf make-zipf-generator 437 (- 1 1e-12) 0 1000 six-sigma)
+  (test-zipf "ovfl-1" 437 (- 1 1e-6)  0 1000 six-sigma)
+  (test-zipf "ovfl-2" 437 (- 1 1e-7)  0 1000 six-sigma)
+  (test-zipf "ovfl-3" 437 (- 1 1e-9)  0 1000 six-sigma)
+  (test-zipf "ovfl-4" 437 (- 1 1e-12) 0 1000 six-sigma)
 
   ; Almost flat distribution
-  (test-zipf make-zipf-generator 36 0.8     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 36 0.5     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 36 0.1     0 1000 six-sigma)
+  (test-zipf "flat-1" 36 0.8     0 1000 six-sigma)
+  (test-zipf "flat-2" 36 0.5     0 1000 six-sigma)
+  (test-zipf "flat-3" 36 0.1     0 1000 six-sigma)
 
   ; A visit to crazy-town -- increasing, not decreasing exponent
-  (test-zipf make-zipf-generator 36 0.0     0 1000 six-sigma)
-  (test-zipf make-zipf-generator 36 -0.1    0 1000 six-sigma)
-  (test-zipf make-zipf-generator 36 -1.0    0 1000 six-sigma)
-  (test-zipf make-zipf-generator 36 -3.0    0 1000 six-sigma)
+  (test-zipf "neg-s-1" 36 0.0     0 1000 six-sigma)
+  (test-zipf "neg-s-2" 36 -0.1    0 1000 six-sigma)
+  (test-zipf "neg-s-3" 36 -1.0    0 1000 six-sigma)
+  (test-zipf "neg-s-4" 36 -3.0    0 1000 six-sigma)
 
   ; More crazy with some Hurwicz on top.
-  (test-zipf make-zipf-generator 16 0.0     0.5 1000 six-sigma)
-  (test-zipf make-zipf-generator 16 -0.2    2.5 1000 six-sigma)
-  (test-zipf make-zipf-generator 16 -1.3    10  1000 six-sigma)
-  (test-zipf make-zipf-generator 16 -2.9    100 1000 six-sigma)
+  (test-zipf "neg-shu-1" 16 0.0     0.5 1000 six-sigma)
+  (test-zipf "neg-shu-2" 16 -0.2    2.5 1000 six-sigma)
+  (test-zipf "neg-shu-3" 16 -1.3    10  1000 six-sigma)
+  (test-zipf "neg-shu-4" 16 -2.9    100 1000 six-sigma)
 
   ; (test-end "srfi-194-zipf")
   )

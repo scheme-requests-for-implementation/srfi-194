@@ -25,7 +25,7 @@
   (with-output-to-file filename write-vec))
 
 ; ------------------------------------------------------------------
-; Simple test harness for exploring paramter space.
+; Simple test harness for exploring the parameter space.
 ;
 ; Take REPS samples from the zeta distribution (ZGEN NVOCAB ESS QUE)
 ; Accumulate them into NVOCAB bins.
@@ -38,7 +38,7 @@
 ; and reports an error if it is not within TOL of the convergent.
 ; i.e. it computes the Banach l_0 norm of (distribution-convergent)
 ; TOL is to be given in units of standard deviations. So, for example,
-; setting TOL to 6 gives a six-sigma bandpass, allowsing the tests to
+; setting TOL to 6 gives a six-sigma bandpass, allowing the tests to
 ; usually pass.
 ;
 (define (test-zipf ZGEN NVOCAB ESS QUE REPS TOL)
@@ -138,12 +138,12 @@
 ; Explore the parameter space.
 (define (zipf-test-group)
 
-  ; The unit test is computes something that is "almost" a standard
+  ; The unit test computes something that is "almost" a standard
   ; deviation for the error distribution. Except, maybe not quite,
   ; I don't fully understand the theory. So most tests seem to come
   ; in fine in well-under a six-sigma deviation, but some of the wilder
-  ; paramter choices misbehave, so six-sigma doesn't always work.
-  ; Also, when the number of bins is large, its easy to under-sample,
+  ; parameter choices misbehave, so six-sigma doesn't always work.
+  ; Also, when the number of bins is large, its easy to under-sample;
   ; some bins end up empty and the std-dev is thrown off as a result.
   ; Thus, the tolerance bounds below are hand-adjusted.
   (define six-sigma 6.0)

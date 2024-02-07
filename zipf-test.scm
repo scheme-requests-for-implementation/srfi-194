@@ -154,7 +154,7 @@
 
 ; Explore the parameter space.
 (define (zipf-test-group)
-  ; (test-start "srfi-194-zipf")
+  ; (test-begin "srfi-194-zipf")
 
   ; The unit test computes something that is "almost" a standard
   ; deviation for the error distribution. Except, maybe not quite,

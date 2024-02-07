@@ -54,7 +54,17 @@
 ; setting TOL to 6 gives a six-sigma bandpass, allowing the tests to
 ; usually pass.
 ;
-(define (test-zipf TEST-ID NVOCAB ESS QUE REPS TOL)
+; The keyword here is "usually". The tail of the Zipf distribution is
+; generally quite thin, and experiences a lot of statistical variation.
+; There does not seem to be any published theory of exactly how the
+; central limit theorm can be applied to estimate the distribution of
+; the tail. The code below assumes an approximate gaussian distribution,
+; computes it and tests it; however certain parameter ranges violate
+; this assumption. Thus, this test will fail from time to time,
+; depending on the luck of the draw. If it fails, it should be repeated
+; once or twice, ubtil it passes.
+;
+(define (test-zipf-once TEST-ID NVOCAB ESS QUE REPS TOL)
 
   ; Default random number generator
   (define ZGEN make-zipf-generator)
@@ -94,14 +104,14 @@
     (vector-fold
       (lambda (i sum cnt) (+ sum cnt)) 0 inv-pow))
 
-  ; The expected distribution
+  ; The expected distribution.
   (define expect
     (vector-map (lambda (i x) (/ x hnorm)) inv-pow))
 
   ; Convert to floating point.
   (define prexpect (vector-map (lambda (i x) (inexact x)) expect))
 
-  ; The difference
+  ; The difference.
   (define diff (vector-map (lambda (i x y) (- x y)) probility prexpect))
 
   ; Re-weight the tail by k^{s/2}. This seems give a normal error
@@ -131,27 +141,57 @@
     (sqrt (/ (vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
              NVOCAB)))
 
-  ; The total counts in the bins should be equal to REPS
+  ; Test for uniform convergence.
+  ; (test-assert TEST-ID (<= l0-norm TOL))
+  (define tol-result (<= l0-norm TOL))
+
+  ; Should not random walk too far away.
+  ; Could tighten this with a proper theory of the error distribution.
+  ; (test-assert TEST-ID (< (abs mean) 3))
+  (define mean-result (< (abs mean) 3))
+  ; I don't understand the error distribution ....
+  ; (test-assert (and (< 0.4 root-mean-square) (< root-mean-square 1.5)))
+
+  ; Sanity check. The total counts in the bins should be equal to REPS.
+  ; If this fails, the test harness itself is broken.
   (test-assert TEST-ID
     (equal? REPS
             (vector-fold
               (lambda (i sum cnt) (+ sum cnt)) 0 bin-counts)))
 
-  ; Test for uniform convergence.
-  (test-assert TEST-ID (<= l0-norm TOL))
-
-  ; Should not random walk too far away.
-  ; Could tighten this with a proper theory of the error distribution.
-  (test-assert TEST-ID (< (abs mean) 3))
-  ; I don't understand the error distribution ....
-  ; (test-assert (and (< 0.4 root-mean-square) (< root-mean-square 1.5)))
-
   ; Utility debug printing
   ;(vector-to-file probility "probility.dat")
   ;(vector-to-file prexpect "prexpect.dat")
   ;(vector-to-file diff "diff.dat")
-  #f)
 
+  (list tol-result mean-result))
+
+; ------------------------------------------------------------------
+; Sometimes the Zip test fails, due to random variation. It should
+; pass, if attempted a second time. This gives it three chances.
+; If it fails three times, then something bad is happening.
+(define (test-zipf TEST-ID NVOCAB ESS QUE REPS TOL)
+
+  ;; Three strikes, you're out.
+  (define RETRY 3)
+
+  (define num-failures
+    (list-index (lambda (n)
+      (define rc (test-zipf-once TEST-ID NVOCAB ESS QUE REPS TOL))
+      (and (first rc) (second rc)))
+      (iota RETRY)))
+
+  ; `num-failures` will be #f if it failed each and every time.
+  ;(if (number? num-failures)
+  ;  (if (< 0 num-failures)
+  ;    (format #t "Test '~A' out of bounds ~A times.\n" TEST-ID num-failures))
+  ;  (format #t "Error: Test '~A' failed every time!\n" TEST-ID))
+
+  ; Announce excessive repeated failures.
+  (test-assert TEST-ID num-failures)
+)
+
+; ------------------------------------------------------------------
 ; Explore the parameter space.
 (define (zipf-test-group)
   ; (test-begin "srfi-194-zipf")

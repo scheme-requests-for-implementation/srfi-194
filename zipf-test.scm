@@ -176,10 +176,11 @@
   (define RETRY 3)
 
   (define num-failures
-    (list-index (lambda (n)
-      (define rc (test-zipf-once TEST-ID NVOCAB ESS QUE REPS TOL))
-      (and (first rc) (second rc)))
-      (iota RETRY)))
+    (list-index
+     (lambda (n)
+       (define rc (test-zipf-once TEST-ID NVOCAB ESS QUE REPS TOL))
+       (and (first rc) (second rc)))
+     (iota RETRY)))
 
   ; `num-failures` will be #f if it failed each and every time.
   ;(if (number? num-failures)

@@ -6,7 +6,7 @@
 ; Unit tests for the Zipf (zeta) distribution.
 ;
 ; Created by Linas Vepstas 10 July 2020
-; Nominated for inclusion in srfi-194
+; Part of srfi-194
 
 ; ------------------------------------------------------------------
 ; Debug utility for gnuplot graphing.
@@ -59,8 +59,8 @@
   ; This is written out long-hand for easier debuggability.
 
   ; Frequency is normalized to be 0.0 to 1.0
-  (define frequency (vector-map (lambda (n) (/ n REPS)) bin-counts))
-  (define probility (vector-map (lambda (n) (inexact n)) frequency))
+  (define frequency (vector-map (lambda (i n) (/ n REPS)) bin-counts))
+  (define probility (vector-map (lambda (i n) (inexact n)) frequency))
 
   ; Sequence 1..NVOCAB
   (define seq
@@ -72,55 +72,55 @@
 
   ; Sequence  1/(k+QUE)^ESS
   (define inv-pow (vector-map
-                    (lambda (k) (expt (+ k QUE) (- (inexact ESS)))) seq))
+                    (lambda (i k) (expt (+ k QUE) (- (inexact ESS)))) seq))
 
   ; Hurwicz harmonic number sum_1..NVOCAB 1/(k+QUE)^ESS
   (define hnorm
     (vector-fold
-      (lambda (sum cnt) (+ sum cnt)) 0 inv-pow))
+      (lambda (i sum cnt) (+ sum cnt)) 0 inv-pow))
 
   ; The expected distribution
   (define expect
-    (vector-map (lambda (x) (/ x hnorm)) inv-pow))
+    (vector-map (lambda (i x) (/ x hnorm)) inv-pow))
 
   ; Convert to floating point.
-  (define prexpect (vector-map (lambda (x) (inexact x)) expect))
+  (define prexpect (vector-map (lambda (i x) (inexact x)) expect))
 
   ; The difference
-  (define diff (vector-map (lambda (x y) (- x y)) probility prexpect))
+  (define diff (vector-map (lambda (i x y) (- x y)) probility prexpect))
 
   ; Re-weight the tail by k^{s/2}. This seems give a normal error
   ; distribution. ... at least, for small q. Problems for large q
   ; and with undersampling; so we hack around that.
   (define err-dist
     (if (< 10 QUE) diff
-        (vector-map (lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS))))
+        (vector-map (lambda (j i x) (* x (expt (+ i 1) (* 0.5 ESS))))
                     (list->vector (iota (vector-length diff)))
                     diff)))
 
   ; Normalize to unit root-mean-square.
   (define rms (/ 1 (sqrt (* 2 3.141592653 REPS))))
-  (define norm-dist (vector-map (lambda (x) (/ x rms)) err-dist))
+  (define norm-dist (vector-map (lambda (i x) (/ x rms)) err-dist))
 
   ; Maximum deviation from expected distribution (l_0 norm)
   (define l0-norm
     (vector-fold
-      (lambda (sum x) (if (< sum (abs x)) (abs x) sum)) 0 norm-dist))
+      (lambda (i sum x) (if (< sum (abs x)) (abs x) sum)) 0 norm-dist))
 
   ; The mean.
   (define mean (/
-                 (vector-fold (lambda (sum x) (+ sum x)) 0 norm-dist)
+                 (vector-fold (lambda (i sum x) (+ sum x)) 0 norm-dist)
                  NVOCAB))
 
   (define root-mean-square (sqrt (/
-                                   (vector-fold (lambda (sum x) (+ sum (* x x))) 0 norm-dist)
+                                   (vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
                                    NVOCAB)))
 
   ; The total counts in the bins should be equal to REPS
   (test-assert
     (equal? REPS
             (vector-fold
-              (lambda (sum cnt) (+ sum cnt)) 0 bin-counts)))
+              (lambda (i sum cnt) (+ sum cnt)) 0 bin-counts)))
 
   ; Test for uniform convergence.
   (test-assert (<= l0-norm TOL))

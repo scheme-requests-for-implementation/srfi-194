@@ -86,8 +86,8 @@
       (vector-unfold (lambda (i x) (values x (+ x 1))) NVOCAB 1))))
 
   ; Sequence  1/(k+QUE)^ESS
-  (define inv-pow (vector-map
-                    (lambda (i k) (expt (+ k QUE) (- (inexact ESS)))) seq))
+  (define inv-pow
+    (vector-map (lambda (i k) (expt (+ k QUE) (- (inexact ESS)))) seq))
 
   ; Hurwicz harmonic number sum_1..NVOCAB 1/(k+QUE)^ESS
   (define hnorm
@@ -123,13 +123,13 @@
       (lambda (i sum x) (if (< sum (abs x)) (abs x) sum)) 0 norm-dist))
 
   ; The mean.
-  (define mean (/
-                 (vector-fold (lambda (i sum x) (+ sum x)) 0 norm-dist)
-                 NVOCAB))
+  (define mean
+    (/ (vector-fold (lambda (i sum x) (+ sum x)) 0 norm-dist)
+       NVOCAB))
 
-  (define root-mean-square (sqrt (/
-                                   (vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
-                                   NVOCAB)))
+  (define root-mean-square
+    (sqrt (/ (vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
+             NVOCAB)))
 
   ; The total counts in the bins should be equal to REPS
   (test-assert TEST-ID

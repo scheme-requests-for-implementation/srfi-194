@@ -8,6 +8,19 @@
 ; Created by Linas Vepstas 10 July 2020
 ; Part of srfi-194
 
+; srfi-133 compatible API
+(define zvector-map vector-map)
+(define z2vector-map vector-map)
+(define zvector-fold vector-fold)
+
+; srfi-43 compatible API
+;(define (zvector-map f vec)
+;  (vector-map (lambda (i x) (f x)) vec))
+;(define (z2vector-map f veca vecb)
+;  (vector-map (lambda (i x y) (f x y)) veca vecb))
+;(define (zvector-fold f knil vec)
+;  (vector-fold (lambda (i x elt) (f x elt)) knil vec))
+
 ; ------------------------------------------------------------------
 ; Debug utility for gnuplot graphing.
 ; You can use this to dump a vector to a tab-delimited file.
@@ -84,61 +97,56 @@
   ; This is written out long-hand for easier debuggability.
 
   ; Frequency is normalized to be 0.0 to 1.0
-  (define frequency (vector-map (lambda (i n) (/ n REPS)) bin-counts))
-  (define probility (vector-map (lambda (i n) (inexact n)) frequency))
+  (define frequency (zvector-map (lambda (n) (/ n REPS)) bin-counts))
+  (define probility (zvector-map (lambda (n) (inexact n)) frequency))
 
   ; Sequence 1..NVOCAB
-  (define seq
-    (cond-expand
-     (gambit
-      (list->vector (iota NVOCAB 1)))
-     (else
-      (vector-unfold (lambda (i x) (values x (+ x 1))) NVOCAB 1))))
+  (define seq (list->vector (iota NVOCAB 1)))
 
   ; Sequence  1/(k+QUE)^ESS
   (define inv-pow
-    (vector-map (lambda (i k) (expt (+ k QUE) (- (inexact ESS)))) seq))
+    (zvector-map (lambda (k) (expt (+ k QUE) (- (inexact ESS)))) seq))
 
   ; Hurwicz harmonic number sum_1..NVOCAB 1/(k+QUE)^ESS
   (define hnorm
-    (vector-fold
-      (lambda (i sum cnt) (+ sum cnt)) 0 inv-pow))
+    (zvector-fold
+      (lambda (sum cnt) (+ sum cnt)) 0 inv-pow))
 
   ; The expected distribution.
   (define expect
-    (vector-map (lambda (i x) (/ x hnorm)) inv-pow))
+    (zvector-map (lambda (x) (/ x hnorm)) inv-pow))
 
   ; Convert to floating point.
-  (define prexpect (vector-map (lambda (i x) (inexact x)) expect))
+  (define prexpect (zvector-map (lambda (x) (inexact x)) expect))
 
   ; The difference.
-  (define diff (vector-map (lambda (i x y) (- x y)) probility prexpect))
+  (define diff (z2vector-map (lambda (x y) (- x y)) probility prexpect))
 
   ; Re-weight the tail by k^{s/2}. This seems give a normal error
   ; distribution. ... at least, for small q. Problems for large q
   ; and with undersampling; so we hack around that.
   (define err-dist
     (if (< 10 QUE) diff
-        (vector-map (lambda (j i x) (* x (expt (+ i 1) (* 0.5 ESS))))
+        (z2vector-map (lambda (i x) (* x (expt (+ i 1) (* 0.5 ESS))))
                     (list->vector (iota (vector-length diff)))
                     diff)))
 
   ; Normalize to unit root-mean-square.
   (define rms (/ 1 (sqrt (* 2 3.141592653 REPS))))
-  (define norm-dist (vector-map (lambda (i x) (/ x rms)) err-dist))
+  (define norm-dist (zvector-map (lambda (x) (/ x rms)) err-dist))
 
   ; Maximum deviation from expected distribution (l_0 norm)
   (define l0-norm
-    (vector-fold
-      (lambda (i sum x) (if (< sum (abs x)) (abs x) sum)) 0 norm-dist))
+    (zvector-fold
+      (lambda (sum x) (if (< sum (abs x)) (abs x) sum)) 0 norm-dist))
 
   ; The mean.
   (define mean
-    (/ (vector-fold (lambda (i sum x) (+ sum x)) 0 norm-dist)
+    (/ (zvector-fold (lambda (sum x) (+ sum x)) 0 norm-dist)
        NVOCAB))
 
   (define root-mean-square
-    (sqrt (/ (vector-fold (lambda (i sum x) (+ sum (* x x))) 0 norm-dist)
+    (sqrt (/ (zvector-fold (lambda (sum x) (+ sum (* x x))) 0 norm-dist)
              NVOCAB)))
 
   ; Test for uniform convergence.
@@ -156,8 +164,8 @@
   ; If this fails, the test harness itself is broken.
   (test-assert TEST-ID
     (equal? REPS
-            (vector-fold
-              (lambda (i sum cnt) (+ sum cnt)) 0 bin-counts)))
+            (zvector-fold
+              (lambda (sum cnt) (+ sum cnt)) 0 bin-counts)))
 
   ; Utility debug printing
   ;(vector-to-file probility "probility.dat")

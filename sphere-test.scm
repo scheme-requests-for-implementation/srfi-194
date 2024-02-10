@@ -61,7 +61,11 @@
   ;; Expect a vector approaching zero. That is, each individual
   ;; coordinate should be uniformly randomly distributed in the
   ;; interval [-1,1]. The sum of REPS samples of these should
-  ;; converge to zero, within pi/2 sqrt(REPS).
+  ;; converge to zero. The standard deviation of a uniform
+  ;; distribution is sqrt(REPS/12).
+  ;; https://en.wikipedia.org/wiki/Continuous_uniform_distribution
+  ;; So setting max bound of 9 stddev should allow it to usually
+  ;; pass.
   (define (converge-to-zero samples)
     (fold (lambda (acc sample) (vector-map + sample acc))
           (make-vector REPS 0.0)
@@ -71,11 +75,12 @@
     (l2-norm (converge-to-zero samples)))
 
   (define (norm-should-be-zero samples)
-    (/ (should-be-zero samples) (* 1.57 (sqrt REPS))))
+    (/ (should-be-zero samples) (sqrt (/ REPS 12.0))))
 
   (define (check-zero samples)
+    (define num-stddev 9.0)
     (define zz (norm-should-be-zero samples))
-    (test-assert (< zz 1)))
+    (test-assert (< zz num-stddev)))
 
   ;; maximum allowed tolerance for radius deviation
   (define EPS (* 2e-15 (sqrt N)))
